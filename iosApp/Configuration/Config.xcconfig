@@ -1,0 +1,7 @@
+TEAM_ID=
+
+PRODUCT_NAME=CMPCustomPagination
+PRODUCT_BUNDLE_IDENTIFIER=lt.vitalijus.cmp_custom_pagination.CMPCustomPagination$(TEAM_ID)
+
+CURRENT_PROJECT_VERSION=1
+MARKETING_VERSION=1.0
