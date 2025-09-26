@@ -1,4 +1,4 @@
-package lt.vitalijus.cmp_custom_pagination
+package lt.vitalijus.cmp_custom_pagination.data.source.remote.api
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -8,20 +8,21 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
+import lt.vitalijus.cmp_custom_pagination.data.model.ProductResponseDto
 import kotlin.coroutines.coroutineContext
 
-class ProductsApi(
+class ProductApiImpl(
     private val httpClient: HttpClient
-) {
+) : ProductApi {
 
-    suspend fun getProducts(
-        page: Int = 0,
-        pageSize: Int = 10
+    override suspend fun getProducts(
+        page: Int,
+        pageSize: Int
     ): Result<ProductResponseDto> {
-        delay(2000)
+        delay(1000)
         val body = try {
             val response = httpClient.get(
-                "https://dummyjson.com/products?select=title,price"
+                "https://dummyjson.com/products"
             ) {
                 contentType(ContentType.Application.Json)
                 parameter("limit", pageSize)
@@ -32,7 +33,6 @@ class ProductsApi(
             coroutineContext.ensureActive()
             return Result.failure(e)
         }
-
         return Result.success(body)
     }
 }
