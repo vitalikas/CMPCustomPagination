@@ -4,12 +4,11 @@ import lt.vitalijus.cmp_custom_pagination.domain.model.BasketItem
 import lt.vitalijus.cmp_custom_pagination.domain.model.Product
 
 data class ProductsState(
-    val currentScreen: Screen = Screen.BASKET,
-    val productListState: ProductListState = ProductListState(),
+    val browseProductsState: BrowseProductsState = BrowseProductsState(),
     val basketState: BasketState = BasketState()
 )
 
-data class ProductListState(
+data class BrowseProductsState(
     val products: List<Product> = emptyList(),
     val isLoadingMore: Boolean = false,
     val error: String? = null

@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -52,22 +51,16 @@ fun BasketScreen(
                     fontWeight = FontWeight.Medium
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                Button(
-                    onClick = onNavigateToProducts
-                ) {
-                    Text(text = "Browse Products")
-                }
+                Text(
+                    text = "Use the Products tab to browse and add items",
+                    fontSize = 16.sp
+                )
             }
         } else {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.End
             ) {
-                Button(
-                    onClick = onNavigateToProducts
-                ) {
-                    Text(text = "Add More Products")
-                }
                 OutlinedButton(
                     onClick = onClearBasket
                 ) {

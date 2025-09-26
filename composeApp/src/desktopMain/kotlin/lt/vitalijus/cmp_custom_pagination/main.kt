@@ -3,7 +3,7 @@ package lt.vitalijus.cmp_custom_pagination
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import lt.vitalijus.cmp_custom_pagination.di.appModule
-import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.ProductScreen
+import lt.vitalijus.cmp_custom_pagination.presentation.navigation.AppNavigation
 import org.koin.core.context.startKoin
 
 fun main() {
@@ -16,7 +16,7 @@ fun main() {
             onCloseRequest = ::exitApplication,
             title = "CMPCustomPagination",
         ) {
-            ProductScreen()
+            AppNavigation()
         }
     }
 }

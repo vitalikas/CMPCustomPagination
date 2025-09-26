@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,14 +24,13 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import lt.vitalijus.cmp_custom_pagination.core.utils.formatPrice
 import lt.vitalijus.cmp_custom_pagination.domain.model.Product
 import lt.vitalijus.cmp_custom_pagination.presentation.products.BasketState
-import lt.vitalijus.cmp_custom_pagination.presentation.products.ProductListState
+import lt.vitalijus.cmp_custom_pagination.presentation.products.BrowseProductsState
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component.ProductCard
 
 @Composable
 fun ProductListScreen(
-    productListState: ProductListState,
+    browseProductsState: BrowseProductsState,
     basketState: BasketState,
-    onNavigateBack: () -> Unit,
     onAddToBasket: (Product, Int) -> Unit,
     onLoadMore: () -> Unit,
     lazyListState: LazyListState,
@@ -41,20 +39,15 @@ fun ProductListScreen(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Button(
-                onClick = onNavigateBack
+        // Show basket summary only if not empty
+        if (!basketState.isEmpty) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "Back to Basket")
-            }
-
-            if (!basketState.isEmpty) {
                 Text(
                     text = "Basket: ${basketState.totalQuantity} items - ${formatPrice(basketState.totalRetailPrice)}",
                     fontWeight = FontWeight.Medium
@@ -63,22 +56,22 @@ fun ProductListScreen(
         }
 
         LaunchedEffect(Unit) {
-            if (productListState.products.isEmpty()) {
+            if (browseProductsState.products.isEmpty()) {
                 println("Triggered initial load: productsState.products is empty")
                 onLoadMore() // Load initial products
             }
         }
 
-        LaunchedEffect(lazyListState, productListState.products.size, productListState.isLoadingMore) {
+        LaunchedEffect(lazyListState, browseProductsState.products.size, browseProductsState.isLoadingMore) {
             snapshotFlow { lazyListState.layoutInfo }
                 .distinctUntilChanged()
                 .collect { layoutInfo ->
-                    val totalItemsCount = productListState.products.size
+                    val totalItemsCount = browseProductsState.products.size
                     val lastVisibleIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
                     val shouldPaginate =
                         lastVisibleIndex >= totalItemsCount - 3 // Trigger when 3 items from the end
                                 && totalItemsCount > 0
-                                && !productListState.isLoadingMore
+                                && !browseProductsState.isLoadingMore
 
                     if (shouldPaginate) {
                         println("Loading more products... (pagination improved)")
@@ -94,14 +87,14 @@ fun ProductListScreen(
             contentPadding = PaddingValues(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(productListState.products) { product ->
+            items(browseProductsState.products) { product ->
                 ProductCard(
                     product = product,
                     onAddToBasket = { quantity -> onAddToBasket(product, quantity) }
                 )
             }
 
-            if (productListState.isLoadingMore) {
+            if (browseProductsState.isLoadingMore) {
                 item {
                     Box(
                         modifier = Modifier

@@ -18,18 +18,15 @@ class ProductsViewModel(
     pagerFactory: ProductPagerFactory
 ) : ViewModel() {
 
-    private val _currentScreen = MutableStateFlow(Screen.BASKET)
-    private val _productListState = MutableStateFlow(ProductListState())
+    private val _browseProductsState = MutableStateFlow(BrowseProductsState())
     private val _basketState = MutableStateFlow(BasketState())
 
     val state = combine(
-        _currentScreen,
-        _productListState,
+        _browseProductsState,
         _basketState
-    ) { screen, productsState, basketState ->
+    ) { browseProductsState, basketState ->
         ProductsState(
-            currentScreen = screen,
-            productListState = productsState,
+            browseProductsState = browseProductsState,
             basketState = basketState
         )
     }.stateIn(
@@ -41,13 +38,13 @@ class ProductsViewModel(
     private val pager: ProductPager = pagerFactory.create { event ->
         when (event) {
             is PagingEvent.LoadingChanged -> {
-                _productListState.update {
+                _browseProductsState.update {
                     it.copy(isLoadingMore = event.isLoading)
                 }
             }
 
             is PagingEvent.ProductsLoaded -> {
-                _productListState.update {
+                _browseProductsState.update {
                     it.copy(
                         products = it.products + event.products,
                         error = null
@@ -56,20 +53,15 @@ class ProductsViewModel(
             }
 
             is PagingEvent.Error -> {
-                _productListState.update {
+                _browseProductsState.update {
                     it.copy(error = event.message)
                 }
             }
         }
     }
 
-    fun navigateToScreen(screen: Screen) {
-        _currentScreen.update { screen }
-    }
-
     fun loadNextProducts() {
         viewModelScope.launch {
-            println("loadNextProducts called")
             pager.loadNextProducts()
         }
     }
@@ -79,7 +71,6 @@ class ProductsViewModel(
             val existingItem = currentState.items.find { it.product.id == product.id }
 
             if (existingItem != null) {
-                // Increase quantity if product already exists
                 val updatedItems = currentState.items.map {
                     if (it.product.id == product.id) {
                         it.copy(quantity = it.quantity + quantity)
@@ -89,7 +80,6 @@ class ProductsViewModel(
                 }
                 currentState.copy(items = updatedItems)
             } else {
-                // Add new product to basket
                 val newItem = BasketItem(product = product, quantity = quantity)
                 currentState.copy(items = currentState.items + newItem)
             }
