@@ -19,7 +19,7 @@ import lt.vitalijus.cmp_custom_pagination.presentation.products.Screen
 @Composable
 fun NavigationBottomBar(
     onNavigateToScreen: (Screen) -> Unit,
-    currentRoute: String?,
+    currentScreen: Screen?,
     basketNotEmpty: Boolean,
     basketQuantity: Int
 ) {
@@ -27,7 +27,7 @@ fun NavigationBottomBar(
 
     NavigationBar {
         screens.forEach { screen ->
-            val isSelected = currentRoute == screen::class.qualifiedName
+            val isSelected = currentScreen == screen
 
             NavigationBarItem(
                 selected = isSelected,
@@ -38,7 +38,7 @@ fun NavigationBottomBar(
                             badge = {
                                 Badge(
                                     modifier = Modifier
-                                        .size(20.dp)
+                                        .size(24.dp)
                                         .clip(CircleShape),
                                     containerColor = Color.Red
                                 ) {
@@ -63,7 +63,7 @@ fun NavigationBottomBar(
                         )
                     }
                 },
-                label = { Text(text = screen.title) }
+                label = { Text(text = screen.route) }
             )
         }
     }

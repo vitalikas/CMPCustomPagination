@@ -5,13 +5,13 @@ import lt.vitalijus.cmp_custom_pagination.core.utils.pager.Pager
 import lt.vitalijus.cmp_custom_pagination.core.utils.pager.PagingStateHandler
 import lt.vitalijus.cmp_custom_pagination.core.utils.pager.PagingStrategy
 import lt.vitalijus.cmp_custom_pagination.core.utils.pager.ProductPager
-import lt.vitalijus.cmp_custom_pagination.domain.ProductPagerFactory
 import lt.vitalijus.cmp_custom_pagination.domain.PagingEvent
+import lt.vitalijus.cmp_custom_pagination.domain.ProductPagerFactory
 import lt.vitalijus.cmp_custom_pagination.domain.model.ProductItem
-import lt.vitalijus.cmp_custom_pagination.domain.repository.ProductRepository
+import lt.vitalijus.cmp_custom_pagination.domain.usecase.products.LoadProductsUseCase
 
 class ProductPagerFactoryImpl(
-    private val repository: ProductRepository
+    private val loadProductsUseCase: LoadProductsUseCase
 ) : ProductPagerFactory {
 
     override fun create(onEvent: (PagingEvent) -> Unit): ProductPager {
@@ -24,7 +24,10 @@ class ProductPagerFactoryImpl(
 
         val productPagingStrategy = object : PagingStrategy<Int, ProductItem> {
             override suspend fun loadPage(key: Int): Result<ProductItem> {
-                return repository.getProducts(page = key, pageSize = pagingConfig.pageSize)
+                return loadProductsUseCase.execute(
+                    page = key,
+                    pageSize = pagingConfig.pageSize
+                )
             }
 
             override suspend fun getNextKey(currentKey: Int, result: ProductItem): Int {

@@ -11,11 +11,12 @@ import kotlinx.coroutines.launch
 import lt.vitalijus.cmp_custom_pagination.core.utils.pager.ProductPager
 import lt.vitalijus.cmp_custom_pagination.domain.PagingEvent
 import lt.vitalijus.cmp_custom_pagination.domain.ProductPagerFactory
-import lt.vitalijus.cmp_custom_pagination.domain.model.BasketItem
 import lt.vitalijus.cmp_custom_pagination.domain.model.Product
+import lt.vitalijus.cmp_custom_pagination.domain.usecase.basket.AddToBasketUseCase
 
 class ProductsViewModel(
-    pagerFactory: ProductPagerFactory
+    pagerFactory: ProductPagerFactory,
+    private val addToBasketUseCase: AddToBasketUseCase
 ) : ViewModel() {
 
     private val _browseProductsState = MutableStateFlow(BrowseProductsState())
@@ -68,21 +69,22 @@ class ProductsViewModel(
 
     fun addToBasket(product: Product, quantity: Int) {
         _basketState.update { currentState ->
-            val existingItem = currentState.items.find { it.product.id == product.id }
+            val result = addToBasketUseCase.execute(
+                currentItems = currentState.items,
+                product = product,
+                quantity = quantity
+            )
 
-            if (existingItem != null) {
-                val updatedItems = currentState.items.map {
-                    if (it.product.id == product.id) {
-                        it.copy(quantity = it.quantity + quantity)
-                    } else {
-                        it
-                    }
+            result.fold(
+                onSuccess = { updatedItems ->
+                    currentState.copy(items = updatedItems)
+                },
+                onFailure = {
+                    // In a real app, you'd handle this error properly
+                    // For now, return unchanged state
+                    currentState
                 }
-                currentState.copy(items = updatedItems)
-            } else {
-                val newItem = BasketItem(product = product, quantity = quantity)
-                currentState.copy(items = currentState.items + newItem)
-            }
+            )
         }
     }
 

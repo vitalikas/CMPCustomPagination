@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package lt.vitalijus.cmp_custom_pagination.presentation.navigation
+package lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -20,21 +21,32 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import lt.vitalijus.cmp_custom_pagination.di.AppKoinComponent
 import lt.vitalijus.cmp_custom_pagination.domain.model.Product
+import lt.vitalijus.cmp_custom_pagination.presentation.navigation.NavigationManager
+import lt.vitalijus.cmp_custom_pagination.presentation.navigation.NavigationManagerFactory
+import lt.vitalijus.cmp_custom_pagination.presentation.navigation.ScreenTitleProvider
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ProductsState
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ProductsViewModel
 import lt.vitalijus.cmp_custom_pagination.presentation.products.Screen
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component.NavigationBottomBar
-import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.BasketScreen
-import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.ProductListScreen
 import org.koin.core.component.inject
 
 @Composable
-fun AppNavigation() {
+fun RootScreen() {
     val viewModel: ProductsViewModel by AppKoinComponent.inject()
 
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val screenTitleProvider: ScreenTitleProvider by AppKoinComponent.inject()
+
+    val navigationManagerFactory: NavigationManagerFactory by AppKoinComponent.inject()
 
     val navController = rememberNavController()
+
+    val currentEntry by navController.currentBackStackEntryAsState()
+
+    val navigationManager: NavigationManager = remember(navController) {
+        navigationManagerFactory.create(navController)
+    }
+
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     val lazyListState = rememberSaveable(saver = LazyListState.Saver) {
         LazyListState()
@@ -42,30 +54,28 @@ fun AppNavigation() {
 
     Scaffold(
         topBar = {
+            val currentRoute = currentEntry?.destination?.route
+            val title = screenTitleProvider.getTitleForRoute(currentRoute)
+
             TopAppBar(
                 title = {
-                    val currentEntry by navController.currentBackStackEntryAsState()
-                    val currentScreen = when (currentEntry?.destination?.route) {
-                        "lt.vitalijus.cmp_custom_pagination.presentation.products.Screen.Basket" -> "Shopping Basket"
-                        "lt.vitalijus.cmp_custom_pagination.presentation.products.Screen.ProductList" -> "Product List"
-                        else -> "Unknown screen"
-                    }
-                    Text(text = currentScreen)
+                    Text(text = title)
                 }
             )
         },
         bottomBar = {
+            val currentRoute = currentEntry?.destination?.route
+            val currentScreen = when {
+                currentRoute?.contains("ProductList") == true -> Screen.ProductList
+                currentRoute?.contains("Basket") == true -> Screen.Basket
+                else -> Screen.ProductList
+            }
+
             NavigationBottomBar(
                 onNavigateToScreen = { screen ->
-                    navController.navigate(screen) {
-                        popUpTo(navController.graph.startDestinationId) {
-                            saveState = true
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
+                    navigationManager.navigateToScreen(screen)
                 },
-                currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route,
+                currentScreen = currentScreen,
                 basketNotEmpty = !state.basketState.isEmpty,
                 basketQuantity = state.basketState.totalQuantity
             )
@@ -75,22 +85,12 @@ fun AppNavigation() {
             navController = navController,
             state = state,
             lazyListState = lazyListState,
-            onAddToBasket = { product, quantity ->
-                viewModel.addToBasket(product, quantity)
-            },
-            onLoadMore = { viewModel.loadNextProducts() },
-            onRemoveItem = { viewModel.removeFromBasket(it) },
-            onClearBasket = { viewModel.clearBasket() },
-            onUpdateQuantity = { productId, quantity ->
-                viewModel.updateQuantity(productId, quantity)
-            },
-            onNavigateToProducts = {
-                navController.navigate(Screen.ProductList) {
-                    popUpTo(Screen.ProductList) {
-                        inclusive = true
-                    }
-                }
-            },
+            onAddToBasket = viewModel::addToBasket,
+            onLoadMore = viewModel::loadNextProducts,
+            onRemoveItem = viewModel::removeFromBasket,
+            onClearBasket = viewModel::clearBasket,
+            onUpdateQuantity = viewModel::updateQuantity,
+            onNavigateToProducts = { navigationManager.navigateToScreen(Screen.ProductList) },
             modifier = Modifier.padding(contentPadding)
         )
     }

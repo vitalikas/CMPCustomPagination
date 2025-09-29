@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.MaterialTheme
-import lt.vitalijus.cmp_custom_pagination.presentation.navigation.AppNavigation
+import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.RootScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -14,7 +14,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MaterialTheme {
-                AppNavigation()
+                RootScreen()
             }
         }
     }
