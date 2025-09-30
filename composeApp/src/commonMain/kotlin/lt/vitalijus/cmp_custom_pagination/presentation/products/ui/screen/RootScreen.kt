@@ -21,9 +21,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import lt.vitalijus.cmp_custom_pagination.di.AppKoinComponent
 import lt.vitalijus.cmp_custom_pagination.domain.model.Product
-import lt.vitalijus.cmp_custom_pagination.presentation.navigation.NavigationManager
-import lt.vitalijus.cmp_custom_pagination.presentation.navigation.NavigationManagerFactory
-import lt.vitalijus.cmp_custom_pagination.presentation.navigation.ScreenTitleProvider
+import lt.vitalijus.cmp_custom_pagination.presentation.products.navigation.NavigationManager
+import lt.vitalijus.cmp_custom_pagination.presentation.products.navigation.NavigationManagerFactory
+import lt.vitalijus.cmp_custom_pagination.presentation.products.navigation.ScreenTitleProvider
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ProductsState
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ProductsViewModel
 import lt.vitalijus.cmp_custom_pagination.presentation.products.Screen

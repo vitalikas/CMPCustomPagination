@@ -1,4 +1,4 @@
-package lt.vitalijus.cmp_custom_pagination.presentation.navigation
+package lt.vitalijus.cmp_custom_pagination.presentation.products.navigation
 
 import androidx.navigation.NavHostController
 import lt.vitalijus.cmp_custom_pagination.presentation.products.Screen
