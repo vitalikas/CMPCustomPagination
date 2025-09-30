@@ -39,7 +39,6 @@ fun ProductListScreen(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        // Show basket summary only if not empty
         if (!basketState.isEmpty) {
             Row(
                 modifier = Modifier
@@ -57,12 +56,15 @@ fun ProductListScreen(
 
         LaunchedEffect(Unit) {
             if (browseProductsState.products.isEmpty()) {
-                println("Triggered initial load: productsState.products is empty")
                 onLoadMore() // Load initial products
             }
         }
 
-        LaunchedEffect(lazyListState, browseProductsState.products.size, browseProductsState.isLoadingMore) {
+        LaunchedEffect(
+            lazyListState,
+            browseProductsState.products.size,
+            browseProductsState.isLoadingMore
+        ) {
             snapshotFlow { lazyListState.layoutInfo }
                 .distinctUntilChanged()
                 .collect { layoutInfo ->
@@ -72,10 +74,7 @@ fun ProductListScreen(
                         lastVisibleIndex >= totalItemsCount - 3 // Trigger when 3 items from the end
                                 && totalItemsCount > 0
                                 && !browseProductsState.isLoadingMore
-
                     if (shouldPaginate) {
-                        println("Loading more products... (pagination improved)")
-                        println("Last visible index: $lastVisibleIndex, Products size: $totalItemsCount")
                         onLoadMore()
                     }
                 }
