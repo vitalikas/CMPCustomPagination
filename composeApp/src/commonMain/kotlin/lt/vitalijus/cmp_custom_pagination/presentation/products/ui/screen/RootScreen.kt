@@ -90,7 +90,6 @@ fun RootScreen() {
             onRemoveItem = viewModel::removeFromBasket,
             onClearBasket = viewModel::clearBasket,
             onUpdateQuantity = viewModel::updateQuantity,
-            onNavigateToProducts = { navigationManager.navigateToScreen(Screen.ProductList) },
             modifier = Modifier.padding(contentPadding)
         )
     }
@@ -106,7 +105,6 @@ private fun AppNavHost(
     onRemoveItem: (Long) -> Unit,
     onClearBasket: () -> Unit,
     onUpdateQuantity: (Long, Int) -> Unit,
-    onNavigateToProducts: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     NavHost(
@@ -127,7 +125,6 @@ private fun AppNavHost(
         composable<Screen.Basket> {
             BasketScreen(
                 basketState = state.basketState,
-                onNavigateToProducts = onNavigateToProducts,
                 onRemoveItem = onRemoveItem,
                 onClearBasket = onClearBasket,
                 onUpdateQuantity = onUpdateQuantity

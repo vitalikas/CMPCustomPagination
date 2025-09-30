@@ -28,7 +28,6 @@ import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component.Bas
 @Composable
 fun BasketScreen(
     basketState: BasketState,
-    onNavigateToProducts: () -> Unit,
     onRemoveItem: (Long) -> Unit,
     onClearBasket: () -> Unit,
     onUpdateQuantity: (Long, Int) -> Unit,
