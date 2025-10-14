@@ -57,6 +57,6 @@ class OffsetBasedPagingStrategy(
             pagingStateHandler = stateHandler
         )
 
-        return ProductPagerImpl<Int>(pager = pager)
+        return ProductPagerImpl(pager = pager)
     }
 }

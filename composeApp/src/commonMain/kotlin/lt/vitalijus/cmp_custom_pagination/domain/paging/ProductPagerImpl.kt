@@ -4,8 +4,8 @@ import lt.vitalijus.cmp_custom_pagination.core.utils.pager.Pager
 import lt.vitalijus.cmp_custom_pagination.core.utils.pager.ProductPager
 import lt.vitalijus.cmp_custom_pagination.domain.model.ProductItem
 
-class ProductPagerImpl<KEY>(
-    private val pager: Pager<KEY, ProductItem>
+class ProductPagerImpl(
+    private val pager: Pager<*, ProductItem>
 ) : ProductPager {
 
     override suspend fun loadNextProducts() {

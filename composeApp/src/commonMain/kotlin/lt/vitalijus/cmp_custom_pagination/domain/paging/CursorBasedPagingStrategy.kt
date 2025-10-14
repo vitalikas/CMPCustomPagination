@@ -62,6 +62,6 @@ class CursorBasedPagingStrategy(
             pagingStateHandler = stateHandler
         )
 
-        return ProductPagerImpl<String?>(pager = pager)
+        return ProductPagerImpl(pager = pager)
     }
 }
