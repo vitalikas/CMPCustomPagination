@@ -18,5 +18,6 @@ data class Product(
 
 data class ProductItem(
     val products: List<Product>,
-    val total: Long
+    val total: Long,
+    val nextCursor: String? = null
 )

@@ -1,13 +1,13 @@
 package lt.vitalijus.cmp_custom_pagination.core.utils.pager
 
-interface PagingConfiguration {
+interface PagingConfig {
     val pageSize: Int
     val initialKey: Any
     val enableRetry: Boolean
     val maxRetries: Int
 }
 
-interface PagingStrategy<KEY, ITEM> {
+interface PagingProvider<KEY, ITEM> {
     suspend fun loadPage(key: KEY): Result<ITEM>
     suspend fun getNextKey(currentKey: KEY, result: ITEM): KEY
     fun isEndReached(currentKey: KEY, result: ITEM): Boolean
@@ -19,21 +19,14 @@ interface PagingStateHandler<ITEM> {
     suspend fun onError(error: Throwable?)
 }
 
-data class DefaultPagingConfiguration(
-    override val pageSize: Int = 10,
-    override val initialKey: Any = 1,
-    override val enableRetry: Boolean = false,
-    override val maxRetries: Int = 3
-) : PagingConfiguration
-
 class Pager<KEY, ITEM>(
-    private val config: PagingConfiguration,
-    private val strategy: PagingStrategy<KEY, ITEM>,
-    private val stateHandler: PagingStateHandler<ITEM>
+    private val pagingConfig: PagingConfig,
+    private val pagingProvider: PagingProvider<KEY, ITEM>,
+    private val pagingStateHandler: PagingStateHandler<ITEM>
 ) {
 
     @Suppress("UNCHECKED_CAST")
-    private var currentKey = config.initialKey as KEY
+    private var currentKey = pagingConfig.initialKey as KEY
     private var isMakingRequest = false
     private var isEndReached = false
     private var retryCount = 0
@@ -42,34 +35,40 @@ class Pager<KEY, ITEM>(
         if (isMakingRequest || isEndReached) return
 
         isMakingRequest = true
-        stateHandler.onLoadingStateChanged(true)
+        pagingStateHandler.onLoadingStateChanged(true)
 
         try {
-            val result = strategy.loadPage(currentKey)
+            val result = pagingProvider.loadPage(currentKey)
             result.fold(
                 onSuccess = { item ->
-                    currentKey = strategy.getNextKey(currentKey, item)
-                    stateHandler.onSuccess(item)
-                    isEndReached = strategy.isEndReached(currentKey, item)
+                    pagingStateHandler.onSuccess(item)
+                    // Check if end is reached BEFORE updating the key
+                    // This allows strategies to use the current key and response for end detection
+                    isEndReached = pagingProvider.isEndReached(currentKey, item)
+                    // Update key for next request
+                    if (!isEndReached) {
+                        currentKey = pagingProvider.getNextKey(currentKey, item)
+                    }
+                    retryCount = 0 // Reset retry count on success
                 },
                 onFailure = { error ->
-                    if (config.enableRetry && retryCount < config.maxRetries) {
+                    if (pagingConfig.enableRetry && retryCount < pagingConfig.maxRetries) {
                         retryCount++
                         loadNextItems()
                     } else {
-                        stateHandler.onError(error)
+                        pagingStateHandler.onError(error)
                     }
                 }
             )
         } finally {
             isMakingRequest = false
-            stateHandler.onLoadingStateChanged(false)
+            pagingStateHandler.onLoadingStateChanged(false)
         }
     }
 
     fun reset() {
         @Suppress("UNCHECKED_CAST")
-        currentKey = config.initialKey as KEY
+        currentKey = pagingConfig.initialKey as KEY
         isEndReached = false
         retryCount = 0
     }

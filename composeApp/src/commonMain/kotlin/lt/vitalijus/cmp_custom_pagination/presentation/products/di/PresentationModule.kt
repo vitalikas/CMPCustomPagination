@@ -1,7 +1,9 @@
 package lt.vitalijus.cmp_custom_pagination.presentation.products.di
 
-import lt.vitalijus.cmp_custom_pagination.domain.ProductPagerFactory
-import lt.vitalijus.cmp_custom_pagination.presentation.products.ProductPagerFactoryImpl
+import lt.vitalijus.cmp_custom_pagination.domain.paging.CursorBasedPagingStrategy
+import lt.vitalijus.cmp_custom_pagination.domain.paging.OffsetBasedPagingStrategy
+import lt.vitalijus.cmp_custom_pagination.domain.paging.PagingStrategy
+import lt.vitalijus.cmp_custom_pagination.domain.paging.ProductPagingFactory
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ProductsViewModel
 import lt.vitalijus.cmp_custom_pagination.presentation.products.navigation.DefaultScreenTitleProvider
 import lt.vitalijus.cmp_custom_pagination.presentation.products.navigation.NavigationController
@@ -9,10 +11,6 @@ import lt.vitalijus.cmp_custom_pagination.presentation.products.navigation.Navig
 import lt.vitalijus.cmp_custom_pagination.presentation.products.navigation.ScreenTitleProvider
 import org.koin.dsl.module
 
-/**
- * Presentation layer DI module
- * Contains UI-related dependencies: ViewModels, navigation, UI utilities
- */
 val presentationModule = module {
     // Navigation & UI Utilities
     single<ScreenTitleProvider> { DefaultScreenTitleProvider() }
@@ -22,7 +20,15 @@ val presentationModule = module {
         }
     }
 
-    // Factories & ViewModels
-    single<ProductPagerFactory> { ProductPagerFactoryImpl(get()) }
+    // Offset-based pagination (uses ProductRepository interface)
+//    single<PagingStrategy> { OffsetBasedPagingStrategy(repository = get()) }
+
+    // Cursor-based pagination (uses CursorProductReader interface)  
+    single<PagingStrategy> { CursorBasedPagingStrategy(cursorReader = get()) }
+
+    // Factory for creating ProductPager instances
+    single { ProductPagingFactory(get()) }
+
+    // ViewModels
     single { ProductsViewModel(get(), get()) }
 }

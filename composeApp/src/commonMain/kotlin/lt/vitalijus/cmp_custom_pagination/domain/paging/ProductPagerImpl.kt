@@ -1,11 +1,11 @@
-package lt.vitalijus.cmp_custom_pagination.presentation.products
+package lt.vitalijus.cmp_custom_pagination.domain.paging
 
 import lt.vitalijus.cmp_custom_pagination.core.utils.pager.Pager
 import lt.vitalijus.cmp_custom_pagination.core.utils.pager.ProductPager
 import lt.vitalijus.cmp_custom_pagination.domain.model.ProductItem
 
-class ProductPagerImpl(
-    private val pager: Pager<Int, ProductItem>
+class ProductPagerImpl<KEY>(
+    private val pager: Pager<KEY, ProductItem>
 ) : ProductPager {
 
     override suspend fun loadNextProducts() {

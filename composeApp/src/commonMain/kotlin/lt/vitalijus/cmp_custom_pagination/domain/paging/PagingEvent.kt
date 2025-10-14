@@ -1,4 +1,4 @@
-package lt.vitalijus.cmp_custom_pagination.domain
+package lt.vitalijus.cmp_custom_pagination.domain.paging
 
 import lt.vitalijus.cmp_custom_pagination.domain.model.Product
 

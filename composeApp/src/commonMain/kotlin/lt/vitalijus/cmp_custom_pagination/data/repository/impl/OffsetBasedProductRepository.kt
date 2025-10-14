@@ -3,11 +3,11 @@ package lt.vitalijus.cmp_custom_pagination.data.repository.impl
 import lt.vitalijus.cmp_custom_pagination.data.mapper.toProductItem
 import lt.vitalijus.cmp_custom_pagination.data.source.remote.api.ProductApi
 import lt.vitalijus.cmp_custom_pagination.domain.model.ProductItem
-import lt.vitalijus.cmp_custom_pagination.domain.repository.ProductRepository
+import lt.vitalijus.cmp_custom_pagination.domain.repository.OffsetBasedProductReader
 
-class ProductRepositoryImpl(
+class OffsetBasedProductRepository(
     private val productApi: ProductApi
-) : ProductRepository {
+) : OffsetBasedProductReader {
 
     override suspend fun getProducts(
         page: Int,

@@ -1,14 +1,14 @@
 package lt.vitalijus.cmp_custom_pagination.domain.usecase.products
 
 import lt.vitalijus.cmp_custom_pagination.domain.model.ProductItem
-import lt.vitalijus.cmp_custom_pagination.domain.repository.ProductReader
+import lt.vitalijus.cmp_custom_pagination.domain.repository.OffsetBasedProductReader
 
 /**
  * Use case for loading products with business rules
  * Single responsibility: Product loading business logic
  */
 class LoadProductsUseCase(
-    private val productReader: ProductReader
+    private val offsetBasedProductReader: OffsetBasedProductReader
 ) {
 
     suspend fun execute(page: Int, pageSize: Int): Result<ProductItem> {
@@ -16,7 +16,7 @@ class LoadProductsUseCase(
         require(pageSize > 0) { "Page size must be > 0" }
         require(pageSize <= MAX_PAGE_SIZE) { "Page size cannot exceed $MAX_PAGE_SIZE" }
 
-        return productReader.getProducts(page, pageSize)
+        return offsetBasedProductReader.getProducts(page, pageSize)
     }
 
     companion object {

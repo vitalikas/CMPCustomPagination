@@ -8,14 +8,13 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import lt.vitalijus.cmp_custom_pagination.core.utils.pager.ProductPager
-import lt.vitalijus.cmp_custom_pagination.domain.PagingEvent
-import lt.vitalijus.cmp_custom_pagination.domain.ProductPagerFactory
 import lt.vitalijus.cmp_custom_pagination.domain.model.Product
+import lt.vitalijus.cmp_custom_pagination.domain.paging.PagingEvent
+import lt.vitalijus.cmp_custom_pagination.domain.paging.ProductPagingFactory
 import lt.vitalijus.cmp_custom_pagination.domain.usecase.basket.AddToBasketUseCase
 
 class ProductsViewModel(
-    pagerFactory: ProductPagerFactory,
+    pagerFactory: ProductPagingFactory,
     private val addToBasketUseCase: AddToBasketUseCase
 ) : ViewModel() {
 
@@ -36,7 +35,7 @@ class ProductsViewModel(
         ProductsState()
     )
 
-    private val pager: ProductPager = pagerFactory.create { event ->
+    private val pager = pagerFactory.create { event ->
         when (event) {
             is PagingEvent.LoadingChanged -> {
                 _browseProductsState.update {
