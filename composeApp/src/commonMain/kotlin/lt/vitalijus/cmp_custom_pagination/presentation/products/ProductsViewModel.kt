@@ -12,6 +12,7 @@ import lt.vitalijus.cmp_custom_pagination.domain.model.Product
 import lt.vitalijus.cmp_custom_pagination.domain.paging.PagingEvent
 import lt.vitalijus.cmp_custom_pagination.domain.paging.ProductPagingFactory
 import lt.vitalijus.cmp_custom_pagination.domain.usecase.basket.AddToBasketUseCase
+import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.ProductAction
 
 class ProductsViewModel(
     pagerFactory: ProductPagingFactory,
@@ -60,13 +61,30 @@ class ProductsViewModel(
         }
     }
 
-    fun loadNextProducts() {
+    fun onAction(action: ProductAction) {
+        when (action) {
+            is ProductAction.AddToBasket -> addToBasket(
+                product = action.product,
+                quantity = action.count
+            )
+
+            ProductAction.ClearBasket -> clearBasket()
+            ProductAction.LoadMore -> loadNextProducts()
+            is ProductAction.RemoveProduct -> removeFromBasket(action.productId)
+            is ProductAction.UpdateQuantity -> updateQuantity(
+                productId = action.productId,
+                newQuantity = action.newQuantity
+            )
+        }
+    }
+
+    private fun loadNextProducts() {
         viewModelScope.launch {
             pager.loadNextProducts()
         }
     }
 
-    fun addToBasket(product: Product, quantity: Int) {
+    private fun addToBasket(product: Product, quantity: Int) {
         _basketState.update { currentState ->
             val result = addToBasketUseCase.execute(
                 currentItems = currentState.items,
@@ -87,17 +105,17 @@ class ProductsViewModel(
         }
     }
 
-    fun removeFromBasket(productId: Long) {
+    private fun removeFromBasket(productId: Long) {
         _basketState.update { currentState ->
             currentState.copy(items = currentState.items.filter { it.product.id != productId })
         }
     }
 
-    fun clearBasket() {
+    private fun clearBasket() {
         _basketState.update { BasketState() }
     }
 
-    fun updateQuantity(productId: Long, newQuantity: Int) {
+    private fun updateQuantity(productId: Long, newQuantity: Int) {
         if (newQuantity <= 0) {
             removeFromBasket(productId)
             return

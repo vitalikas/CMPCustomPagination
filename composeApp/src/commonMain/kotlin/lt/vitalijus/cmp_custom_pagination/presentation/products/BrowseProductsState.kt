@@ -21,10 +21,10 @@ data class BasketState(
         get() = items.sumOf { it.quantity }
 
     val totalCostPrice: Double
-        get() = items.sumOf { it.totalCost }
+        get() = items.sumOf { it.product.price * 0.7 * it.quantity }
 
     val totalRetailPrice: Double
-        get() = items.sumOf { it.totalRetail }
+        get() = items.sumOf { it.product.price * it.quantity }
 
     val isEmpty: Boolean
         get() = items.isEmpty()

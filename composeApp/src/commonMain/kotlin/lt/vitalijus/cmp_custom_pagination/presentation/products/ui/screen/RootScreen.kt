@@ -20,14 +20,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import lt.vitalijus.cmp_custom_pagination.di.AppKoinComponent
-import lt.vitalijus.cmp_custom_pagination.domain.model.Product
-import lt.vitalijus.cmp_custom_pagination.presentation.products.navigation.NavigationManager
-import lt.vitalijus.cmp_custom_pagination.presentation.products.navigation.NavigationManagerFactory
-import lt.vitalijus.cmp_custom_pagination.presentation.products.navigation.ScreenTitleProvider
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ProductsState
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ProductsViewModel
 import lt.vitalijus.cmp_custom_pagination.presentation.products.Screen
+import lt.vitalijus.cmp_custom_pagination.presentation.products.navigation.NavigationManager
+import lt.vitalijus.cmp_custom_pagination.presentation.products.navigation.NavigationManagerFactory
+import lt.vitalijus.cmp_custom_pagination.presentation.products.navigation.ScreenTitleProvider
+import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.ProductAction
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component.NavigationBottomBar
+import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.basket.BasketScreen
+import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.products.ProductListScreen
 import org.koin.core.component.inject
 
 @Composable
@@ -72,9 +74,7 @@ fun RootScreen() {
             }
 
             NavigationBottomBar(
-                onNavigateToScreen = { screen ->
-                    navigationManager.navigateToScreen(screen)
-                },
+                onNavigateToScreen = navigationManager::navigateToScreen,
                 currentScreen = currentScreen,
                 basketNotEmpty = !state.basketState.isEmpty,
                 basketQuantity = state.basketState.totalQuantity
@@ -85,11 +85,7 @@ fun RootScreen() {
             navController = navController,
             state = state,
             lazyListState = lazyListState,
-            onAddToBasket = viewModel::addToBasket,
-            onLoadMore = viewModel::loadNextProducts,
-            onRemoveItem = viewModel::removeFromBasket,
-            onClearBasket = viewModel::clearBasket,
-            onUpdateQuantity = viewModel::updateQuantity,
+            onAction = viewModel::onAction,
             modifier = Modifier.padding(contentPadding)
         )
     }
@@ -100,11 +96,7 @@ private fun AppNavHost(
     navController: NavHostController,
     state: ProductsState,
     lazyListState: LazyListState,
-    onAddToBasket: (Product, Int) -> Unit,
-    onLoadMore: () -> Unit,
-    onRemoveItem: (Long) -> Unit,
-    onClearBasket: () -> Unit,
-    onUpdateQuantity: (Long, Int) -> Unit,
+    onAction: (ProductAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
     NavHost(
@@ -116,8 +108,7 @@ private fun AppNavHost(
             ProductListScreen(
                 browseProductsState = state.browseProductsState,
                 basketState = state.basketState,
-                onAddToBasket = onAddToBasket,
-                onLoadMore = onLoadMore,
+                onAction = onAction,
                 lazyListState = lazyListState
             )
         }
@@ -125,9 +116,7 @@ private fun AppNavHost(
         composable<Screen.Basket> {
             BasketScreen(
                 basketState = state.basketState,
-                onRemoveItem = onRemoveItem,
-                onClearBasket = onClearBasket,
-                onUpdateQuantity = onUpdateQuantity
+                onAction = onAction
             )
         }
     }

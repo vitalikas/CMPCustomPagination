@@ -1,4 +1,4 @@
-package lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen
+package lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.products
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,17 +22,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
 import lt.vitalijus.cmp_custom_pagination.core.utils.formatPrice
-import lt.vitalijus.cmp_custom_pagination.domain.model.Product
 import lt.vitalijus.cmp_custom_pagination.presentation.products.BasketState
 import lt.vitalijus.cmp_custom_pagination.presentation.products.BrowseProductsState
+import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.ProductAction
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component.ProductCard
 
 @Composable
 fun ProductListScreen(
     browseProductsState: BrowseProductsState,
     basketState: BasketState,
-    onAddToBasket: (Product, Int) -> Unit,
-    onLoadMore: () -> Unit,
+    onAction: (ProductAction) -> Unit,
     lazyListState: LazyListState,
     modifier: Modifier = Modifier
 ) {
@@ -56,7 +55,7 @@ fun ProductListScreen(
 
         LaunchedEffect(Unit) {
             if (browseProductsState.products.isEmpty()) {
-                onLoadMore() // Load initial products
+                onAction(ProductAction.LoadMore) // Load initial products
             }
         }
 
@@ -75,7 +74,7 @@ fun ProductListScreen(
                                 && totalItemsCount > 0
                                 && !browseProductsState.isLoadingMore
                     if (shouldPaginate) {
-                        onLoadMore()
+                        onAction(ProductAction.LoadMore)
                     }
                 }
         }
@@ -89,7 +88,14 @@ fun ProductListScreen(
             items(browseProductsState.products) { product ->
                 ProductCard(
                     product = product,
-                    onAddToBasket = { quantity -> onAddToBasket(product, quantity) }
+                    onAddToBasket = { quantity ->
+                        onAction(
+                            ProductAction.AddToBasket(
+                                product = product,
+                                count = quantity
+                            )
+                        )
+                    }
                 )
             }
 

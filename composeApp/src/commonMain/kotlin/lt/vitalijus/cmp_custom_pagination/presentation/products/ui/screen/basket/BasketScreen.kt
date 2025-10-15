@@ -1,4 +1,4 @@
-package lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen
+package lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.basket
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,14 +23,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import lt.vitalijus.cmp_custom_pagination.core.utils.formatPrice
 import lt.vitalijus.cmp_custom_pagination.presentation.products.BasketState
+import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.ProductAction
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component.BasketItemCard
 
 @Composable
 fun BasketScreen(
     basketState: BasketState,
-    onRemoveItem: (Long) -> Unit,
-    onClearBasket: () -> Unit,
-    onUpdateQuantity: (Long, Int) -> Unit,
+    onAction: (ProductAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -61,7 +60,7 @@ fun BasketScreen(
                 horizontalArrangement = Arrangement.End
             ) {
                 OutlinedButton(
-                    onClick = onClearBasket
+                    onClick = { onAction(ProductAction.ClearBasket) }
                 ) {
                     Text(text = "Clear Basket")
                 }
@@ -76,9 +75,16 @@ fun BasketScreen(
                 items(basketState.items) { basketItem ->
                     BasketItemCard(
                         basketItem = basketItem,
-                        onRemove = { onRemoveItem(basketItem.product.id) },
+                        onRemove = {
+                            onAction(ProductAction.RemoveProduct(productId = basketItem.product.id))
+                        },
                         onUpdateQuantity = { quantity ->
-                            onUpdateQuantity(basketItem.product.id, quantity)
+                            onAction(
+                                ProductAction.UpdateQuantity(
+                                    productId = basketItem.product.id,
+                                    newQuantity = quantity
+                                )
+                            )
                         }
                     )
                 }
