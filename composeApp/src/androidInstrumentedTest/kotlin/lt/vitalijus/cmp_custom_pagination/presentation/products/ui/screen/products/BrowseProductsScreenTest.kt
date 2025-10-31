@@ -16,7 +16,7 @@ import lt.vitalijus.cmp_custom_pagination.domain.model.BasketItem
 import lt.vitalijus.cmp_custom_pagination.domain.model.Product
 import lt.vitalijus.cmp_custom_pagination.presentation.products.BasketState
 import lt.vitalijus.cmp_custom_pagination.presentation.products.BrowseProductsState
-import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.ProductAction
+import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsIntent
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -71,7 +71,7 @@ class BrowseProductsScreenTest {
             ProductListScreen(
                 browseProductsState = browseProductsState,
                 basketState = basketState,
-                onAction = {},
+                onIntent = {},
                 lazyListState = rememberLazyListState()
             )
         }
@@ -94,7 +94,7 @@ class BrowseProductsScreenTest {
             ProductListScreen(
                 browseProductsState = browseProductsState,
                 basketState = basketState,
-                onAction = {},
+                onIntent = {},
                 lazyListState = rememberLazyListState()
             )
         }
@@ -121,7 +121,7 @@ class BrowseProductsScreenTest {
             ProductListScreen(
                 browseProductsState = browseProductsState,
                 basketState = basketState,
-                onAction = {},
+                onIntent = {},
                 lazyListState = rememberLazyListState()
             )
         }
@@ -131,22 +131,22 @@ class BrowseProductsScreenTest {
     }
 
     @Test
-    fun testAddToBasket_TriggersAction() {
+    fun testAddToBasket_TriggersIntent() {
         // Given
         val browseProductsState = BrowseProductsState(
             products = listOf(sampleProducts[0]),
             isLoadingMore = false
         )
         val basketState = BasketState()
-        val actions = mutableListOf<ProductAction>()
+        val intents = mutableListOf<ProductsIntent>()
 
         // When
         composeTestRule.setContent {
             ProductListScreen(
                 browseProductsState = browseProductsState,
                 basketState = basketState,
-                onAction = {
-                    actions.add(it)
+                onIntent = {
+                    intents.add(it)
                 },
                 lazyListState = rememberLazyListState()
             )
@@ -156,10 +156,10 @@ class BrowseProductsScreenTest {
         composeTestRule.onNodeWithText("Add to Basket").performClick()
 
         // Then
-        assert(actions.any {
-            it is ProductAction.AddToBasket &&
+        assert(intents.any {
+            it is ProductsIntent.AddToBasket &&
                     it.product.id == 1L &&
-                    it.count == 1
+                    it.quantity == 1
         })
     }
 
@@ -171,14 +171,14 @@ class BrowseProductsScreenTest {
             isLoadingMore = false
         )
         val basketState = BasketState()
-        val actions = mutableListOf<ProductAction>()
+        val intents = mutableListOf<ProductsIntent>()
 
         // When
         composeTestRule.setContent {
             ProductListScreen(
                 browseProductsState = browseProductsState,
                 basketState = basketState,
-                onAction = { actions.add(it) },
+                onIntent = { intents.add(it) },
                 lazyListState = rememberLazyListState()
             )
         }
@@ -202,9 +202,9 @@ class BrowseProductsScreenTest {
         composeTestRule.onAllNodesWithText("+")[0].performClick() // Now at 2
         composeTestRule.onNodeWithText("Add to Basket").performClick()
 
-        // Verify the action has quantity 2
-        val addAction = actions.filterIsInstance<ProductAction.AddToBasket>().lastOrNull()
-        assert(addAction?.count == 2)
+        // Verify the intent has quantity 2
+        val addIntent = intents.filterIsInstance<ProductsIntent.AddToBasket>().lastOrNull()
+        assert(addIntent?.quantity == 2)
     }
 
     @Test
@@ -228,7 +228,7 @@ class BrowseProductsScreenTest {
             ProductListScreen(
                 browseProductsState = browseProductsState,
                 basketState = basketState,
-                onAction = {},
+                onIntent = {},
                 lazyListState = rememberLazyListState()
             )
         }
@@ -251,7 +251,7 @@ class BrowseProductsScreenTest {
             ProductListScreen(
                 browseProductsState = browseProductsState,
                 basketState = basketState,
-                onAction = {},
+                onIntent = {},
                 lazyListState = rememberLazyListState()
             )
         }
@@ -263,7 +263,7 @@ class BrowseProductsScreenTest {
     @Test
     fun testLoadingIndicator_DisplayedWhenLoading() {
         // Given
-        val actions = mutableListOf<ProductAction>()
+        val intents = mutableListOf<ProductsIntent>()
         val listState = LazyListState()
         val browseStateHolder = mutableStateOf(
             BrowseProductsState(
@@ -278,7 +278,7 @@ class BrowseProductsScreenTest {
             ProductListScreen(
                 browseProductsState = browseStateHolder.value,
                 basketState = basketState,
-                onAction = { actions.add(it) },
+                onIntent = { intents.add(it) },
                 lazyListState = listState
             )
         }
@@ -287,7 +287,7 @@ class BrowseProductsScreenTest {
         composeTestRule.waitForIdle()
 
         // Then - Should trigger LoadMore
-        assert(actions.any { it is ProductAction.LoadMore })
+        assert(intents.any { it is ProductsIntent.LoadMore })
 
         // Simulate loading state by changing the flag and triggering recomposition
         composeTestRule.runOnIdle {
@@ -314,7 +314,7 @@ class BrowseProductsScreenTest {
             ProductListScreen(
                 browseProductsState = browseProductsState,
                 basketState = basketState,
-                onAction = {},
+                onIntent = {},
                 lazyListState = rememberLazyListState()
             )
         }
@@ -334,14 +334,14 @@ class BrowseProductsScreenTest {
             isLoadingMore = false
         )
         val basketState = BasketState()
-        val actions = mutableListOf<ProductAction>()
+        val intents = mutableListOf<ProductsIntent>()
 
         // When
         composeTestRule.setContent {
             ProductListScreen(
                 browseProductsState = browseProductsState,
                 basketState = basketState,
-                onAction = { actions.add(it) },
+                onIntent = { intents.add(it) },
                 lazyListState = rememberLazyListState()
             )
         }
@@ -353,12 +353,12 @@ class BrowseProductsScreenTest {
         composeTestRule.onAllNodesWithText("Add to Basket")[1].performClick()
 
         // Then
-        assert(actions.size >= 2)
+        assert(intents.size >= 2)
         assert(
-            actions.filterIsInstance<ProductAction.AddToBasket>()
+            intents.filterIsInstance<ProductsIntent.AddToBasket>()
                 .any { it.product.id == 1L })
         assert(
-            actions.filterIsInstance<ProductAction.AddToBasket>()
+            intents.filterIsInstance<ProductsIntent.AddToBasket>()
                 .any { it.product.id == 2L })
     }
 
@@ -376,7 +376,7 @@ class BrowseProductsScreenTest {
             ProductListScreen(
                 browseProductsState = browseProductsState,
                 basketState = basketState,
-                onAction = {},
+                onIntent = {},
                 lazyListState = rememberLazyListState()
             )
         }
@@ -388,21 +388,21 @@ class BrowseProductsScreenTest {
     }
 
     @Test
-    fun testInitialLoad_TriggersLoadMoreAction() {
+    fun testInitialLoad_TriggersLoadMoreIntent() {
         // Given
         val browseProductsState = BrowseProductsState(
             products = emptyList(),
             isLoadingMore = false
         )
         val basketState = BasketState()
-        val actions = mutableListOf<ProductAction>()
+        val intents = mutableListOf<ProductsIntent>()
 
         // When
         composeTestRule.setContent {
             ProductListScreen(
                 browseProductsState = browseProductsState,
                 basketState = basketState,
-                onAction = { actions.add(it) },
+                onIntent = { intents.add(it) },
                 lazyListState = rememberLazyListState()
             )
         }
@@ -411,7 +411,7 @@ class BrowseProductsScreenTest {
         composeTestRule.waitForIdle()
 
         // Then
-        assert(actions.any { it is ProductAction.LoadMore })
+        assert(intents.any { it is ProductsIntent.LoadMore })
     }
 
     @Test
@@ -436,7 +436,7 @@ class BrowseProductsScreenTest {
             )
         )
         val basketState = BasketState()
-        val actions = mutableListOf<ProductAction>()
+        val intents = mutableListOf<ProductsIntent>()
         val listState = LazyListState()
 
         // When
@@ -444,7 +444,7 @@ class BrowseProductsScreenTest {
             ProductListScreen(
                 browseProductsState = browseStateHolder.value,
                 basketState = basketState,
-                onAction = { actions.add(it) },
+                onIntent = { intents.add(it) },
                 lazyListState = listState
             )
         }
@@ -463,7 +463,7 @@ class BrowseProductsScreenTest {
         composeTestRule.waitForIdle()
 
         // Then - Should trigger LoadMore when within 3 items of the end
-        assert(actions.any { it is ProductAction.LoadMore })
+        assert(intents.any { it is ProductsIntent.LoadMore })
 
         // Simulate loading state by updating the state properly
         composeTestRule.runOnIdle {
@@ -510,7 +510,7 @@ class BrowseProductsScreenTest {
             ProductListScreen(
                 browseProductsState = browseProductsState,
                 basketState = basketState,
-                onAction = {},
+                onIntent = {},
                 lazyListState = rememberLazyListState()
             )
         }
@@ -548,7 +548,7 @@ class BrowseProductsScreenTest {
             ProductListScreen(
                 browseProductsState = browseProductsState,
                 basketState = basketState,
-                onAction = {},
+                onIntent = {},
                 lazyListState = rememberLazyListState()
             )
         }

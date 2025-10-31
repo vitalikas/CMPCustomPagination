@@ -23,13 +23,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import lt.vitalijus.cmp_custom_pagination.core.utils.formatPrice
 import lt.vitalijus.cmp_custom_pagination.presentation.products.BasketState
-import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.ProductAction
+import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsIntent
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component.BasketItemCard
 
 @Composable
 fun BasketScreen(
     basketState: BasketState,
-    onAction: (ProductAction) -> Unit,
+    onIntent: (ProductsIntent) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -60,7 +60,7 @@ fun BasketScreen(
                 horizontalArrangement = Arrangement.End
             ) {
                 OutlinedButton(
-                    onClick = { onAction(ProductAction.ClearBasket) }
+                    onClick = { onIntent(ProductsIntent.ClearBasket) }
                 ) {
                     Text(text = "Clear Basket")
                 }
@@ -76,11 +76,11 @@ fun BasketScreen(
                     BasketItemCard(
                         basketItem = basketItem,
                         onRemove = {
-                            onAction(ProductAction.RemoveProduct(productId = basketItem.product.id))
+                            onIntent(ProductsIntent.RemoveProduct(productId = basketItem.product.id))
                         },
                         onUpdateQuantity = { quantity ->
-                            onAction(
-                                ProductAction.UpdateQuantity(
+                            onIntent(
+                                ProductsIntent.UpdateQuantity(
                                     productId = basketItem.product.id,
                                     newQuantity = quantity
                                 )

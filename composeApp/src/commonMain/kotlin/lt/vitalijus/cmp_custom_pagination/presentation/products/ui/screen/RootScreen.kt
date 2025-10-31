@@ -22,7 +22,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import kotlinx.coroutines.flow.collectLatest
 import lt.vitalijus.cmp_custom_pagination.di.AppKoinComponent
 import lt.vitalijus.cmp_custom_pagination.presentation.products.BasketState
 import lt.vitalijus.cmp_custom_pagination.presentation.products.BrowseProductsState
@@ -34,7 +33,6 @@ import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsInte
 import lt.vitalijus.cmp_custom_pagination.presentation.products.navigation.NavigationManager
 import lt.vitalijus.cmp_custom_pagination.presentation.products.navigation.NavigationManagerFactory
 import lt.vitalijus.cmp_custom_pagination.presentation.products.navigation.ScreenTitleProvider
-import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.ProductAction
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component.NavigationBottomBar
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.basket.BasketScreen
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.products.ProductListScreen
@@ -133,24 +131,7 @@ fun RootScreen() {
             navController = navController,
             state = state,
             lazyListState = lazyListState,
-            onAction = { action ->
-                val intent = when (action) {
-                    is ProductAction.LoadMore -> ProductsIntent.LoadMore
-                    is ProductAction.AddToBasket -> ProductsIntent.AddToBasket(
-                        action.product,
-                        action.count
-                    )
-
-                    is ProductAction.UpdateQuantity -> ProductsIntent.UpdateQuantity(
-                        action.productId,
-                        action.newQuantity
-                    )
-
-                    is ProductAction.RemoveProduct -> ProductsIntent.RemoveProduct(action.productId)
-                    ProductAction.ClearBasket -> ProductsIntent.ClearBasket
-                }
-                viewModel.processIntent(intent)
-            },
+            onIntent = viewModel::processIntent,
             modifier = Modifier.padding(contentPadding)
         )
     }
@@ -161,7 +142,7 @@ private fun AppNavHost(
     navController: NavHostController,
     state: ProductsState,
     lazyListState: LazyListState,
-    onAction: (ProductAction) -> Unit,
+    onIntent: (ProductsIntent) -> Unit,
     modifier: Modifier = Modifier
 ) {
     NavHost(
@@ -173,7 +154,7 @@ private fun AppNavHost(
             ProductListScreen(
                 browseProductsState = state.browseProductsState,
                 basketState = state.basketState,
-                onAction = onAction,
+                onIntent = onIntent,
                 lazyListState = lazyListState
             )
         }
@@ -181,7 +162,7 @@ private fun AppNavHost(
         composable<Screen.Basket> {
             BasketScreen(
                 basketState = state.basketState,
-                onAction = onAction
+                onIntent = onIntent
             )
         }
     }
