@@ -22,13 +22,23 @@ class InMemoryProductDataSource {
         delay(1000) // Simulate network delay
 
         return try {
+            // Validate limit
+            require(limit > 0) { "Limit must be positive" }
+
             // Filter products based on cursor (get products with ID > cursor)
             val filteredProducts = if (cursor == null) {
                 dummyProducts
             } else {
-                val cursorId = cursor.toLongOrNull() ?: 0
-                // Get all products with ID greater than cursor
-                dummyProducts.filter { it.id > cursorId }
+                val cursorId = cursor.toLongOrNull()
+                    ?: return Result.failure(IllegalArgumentException("Invalid cursor format: $cursor"))
+
+                val productsAfterCursor = dummyProducts.filter { it.id > cursorId }
+
+                if (dummyProducts.none { it.id == cursorId }) {
+                    println("Cursor product ID=$cursorId not found (may have been deleted), continuing pagination normally")
+                }
+
+                productsAfterCursor
             }
 
             // Take only the requested limit
@@ -39,7 +49,7 @@ class InMemoryProductDataSource {
                 "${products.last().id}" // ID of the last item in current page
             } else null
 
-            println("📊 DataSource: cursor='$cursor', limit=$limit, returned ${products.size} products, nextCursor='$nextCursor'")
+            println("DataSource: cursor='$cursor', limit=$limit, returned ${products.size} products, nextCursor='$nextCursor'")
 
             val response = CursorResponse(
                 products = products,
