@@ -36,7 +36,11 @@ object ProductsReducer {
             }
 
             is ProductsMutation.BasketUpdated -> {
-                state.copy(basketItems = mutation.items)
+                state.copy(
+                    basketItems = mutation.items,
+                    isLoadingMore = false,
+                    error = null
+                )
             }
         }
     }
