@@ -371,7 +371,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Contact
 
-**Vitalijus** - [@yourusername](https://github.com/yourusername)
+**Vitalijus** - [@vitalikas](https://github.com/yourusername)
 
 Project
 Link: [https://github.com/yourusername/CMPCustomPagination](https://github.com/yourusername/CMPCustomPagination)
