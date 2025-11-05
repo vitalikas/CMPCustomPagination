@@ -369,12 +369,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [Ktor](https://ktor.io/)
 - [Koin](https://insert-koin.io/)
 
-## Contact
-
-**Vitalijus** - [@vitalikas](https://github.com/yourusername)
-
-Project
-Link: [https://github.com/yourusername/CMPCustomPagination](https://github.com/yourusername/CMPCustomPagination)
-
 ---
 **⭐ If you found this project helpful, please give it a star!**
