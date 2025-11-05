@@ -14,8 +14,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.runBlocking
 import lt.vitalijus.cmp_custom_pagination.domain.model.BasketItem
 import lt.vitalijus.cmp_custom_pagination.domain.model.Product
-import lt.vitalijus.cmp_custom_pagination.presentation.products.BasketState
-import lt.vitalijus.cmp_custom_pagination.presentation.products.BrowseProductsState
 import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsIntent
 import org.junit.Rule
 import org.junit.Test

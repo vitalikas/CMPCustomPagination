@@ -3,7 +3,9 @@ package lt.vitalijus.cmp_custom_pagination.presentation.products.di
 import lt.vitalijus.cmp_custom_pagination.domain.paging.CursorBasedPagingStrategy
 import lt.vitalijus.cmp_custom_pagination.domain.paging.PagingStrategy
 import lt.vitalijus.cmp_custom_pagination.domain.paging.ProductPagingFactory
-import lt.vitalijus.cmp_custom_pagination.presentation.products.ProductsViewModelMvi
+import lt.vitalijus.cmp_custom_pagination.presentation.products.ProductsViewModel
+import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsStateMachine
+import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsTransitionState
 import lt.vitalijus.cmp_custom_pagination.presentation.products.navigation.DefaultScreenTitleProvider
 import lt.vitalijus.cmp_custom_pagination.presentation.products.navigation.NavigationController
 import lt.vitalijus.cmp_custom_pagination.presentation.products.navigation.NavigationManagerFactory
@@ -28,6 +30,15 @@ val presentationModule = module {
     // Factory for creating ProductPager instances
     single { ProductPagingFactory(get()) }
 
+    // MVI Components
+    factory { ProductsStateMachine(initialState = ProductsTransitionState.Idle) }
+
     // ViewModels
-    single { ProductsViewModelMvi(get(), get()) }
+    single {
+        ProductsViewModel(
+            pagerFactory = get(),
+            addToBasketUseCase = get(),
+            stateMachine = get()
+        )
+    }
 }

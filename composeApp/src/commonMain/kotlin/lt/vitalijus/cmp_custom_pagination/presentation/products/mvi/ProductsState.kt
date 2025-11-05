@@ -4,7 +4,7 @@ import lt.vitalijus.cmp_custom_pagination.domain.model.BasketItem
 import lt.vitalijus.cmp_custom_pagination.domain.model.Product
 
 /**
- * Single immutable state for the Products feature
+ * Single immutable state for the Products feature.
  */
 data class ProductsState(
     val products: List<Product> = emptyList(),

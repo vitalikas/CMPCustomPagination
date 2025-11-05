@@ -31,7 +31,7 @@ class ProductsViewModelMviTest {
 
     private val testDispatcher = UnconfinedTestDispatcher()
 
-    private lateinit var viewModel: ProductsViewModelMvi
+    private lateinit var viewModel: ProductsViewModel
     private lateinit var mockPagingStrategy: FakePagingStrategy
     private lateinit var mockPagingFactory: ProductPagingFactory
     private lateinit var addToBasketUseCase: AddToBasketUseCase
@@ -81,7 +81,7 @@ class ProductsViewModelMviTest {
         mockPagingStrategy = FakePagingStrategy(products = sampleProducts)
         mockPagingFactory = ProductPagingFactory(pagingStrategy = mockPagingStrategy)
         addToBasketUseCase = AddToBasketUseCase()
-        viewModel = ProductsViewModelMvi(
+        viewModel = ProductsViewModel(
             pagerFactory = mockPagingFactory,
             addToBasketUseCase = addToBasketUseCase
         )

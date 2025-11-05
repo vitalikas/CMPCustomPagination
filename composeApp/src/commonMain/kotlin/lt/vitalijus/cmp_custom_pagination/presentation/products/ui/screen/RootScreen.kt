@@ -23,13 +23,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import lt.vitalijus.cmp_custom_pagination.di.AppKoinComponent
-import lt.vitalijus.cmp_custom_pagination.presentation.products.BasketState
-import lt.vitalijus.cmp_custom_pagination.presentation.products.BrowseProductsState
-import lt.vitalijus.cmp_custom_pagination.presentation.products.ProductsState
-import lt.vitalijus.cmp_custom_pagination.presentation.products.ProductsViewModelMvi
+import lt.vitalijus.cmp_custom_pagination.presentation.products.ProductsViewModel
 import lt.vitalijus.cmp_custom_pagination.presentation.products.Screen
 import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsEffect
 import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsIntent
+import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsState
 import lt.vitalijus.cmp_custom_pagination.presentation.products.navigation.NavigationManager
 import lt.vitalijus.cmp_custom_pagination.presentation.products.navigation.NavigationManagerFactory
 import lt.vitalijus.cmp_custom_pagination.presentation.products.navigation.ScreenTitleProvider
@@ -40,7 +38,7 @@ import org.koin.core.component.inject
 
 @Composable
 fun RootScreen() {
-    val viewModel: ProductsViewModelMvi by AppKoinComponent.inject()
+    val viewModel: ProductsViewModel by AppKoinComponent.inject()
 
     val screenTitleProvider: ScreenTitleProvider by AppKoinComponent.inject()
 
@@ -54,7 +52,7 @@ fun RootScreen() {
         navigationManagerFactory.create(navController)
     }
 
-    val mviState by viewModel.state.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -79,17 +77,6 @@ fun RootScreen() {
             }
         }
     }
-
-    val state = ProductsState(
-        browseProductsState = BrowseProductsState(
-            products = mviState.products,
-            isLoadingMore = mviState.isLoadingMore,
-            error = mviState.error
-        ),
-        basketState = BasketState(
-            items = mviState.basketItems
-        )
-    )
 
     val lazyListState = rememberSaveable(saver = LazyListState.Saver) {
         LazyListState()
@@ -122,8 +109,8 @@ fun RootScreen() {
                     viewModel.processIntent(ProductsIntent.NavigateTo(screen))
                 },
                 currentScreen = currentScreen,
-                basketNotEmpty = !state.basketState.isEmpty,
-                basketQuantity = state.basketState.totalQuantity
+                basketNotEmpty = !state.isBasketEmpty,
+                basketQuantity = state.totalQuantity
             )
         }
     ) { contentPadding ->
@@ -152,8 +139,7 @@ private fun AppNavHost(
     ) {
         composable<Screen.ProductList> {
             ProductListScreen(
-                browseProductsState = state.browseProductsState,
-                basketState = state.basketState,
+                state = state,
                 onIntent = onIntent,
                 lazyListState = lazyListState
             )
@@ -161,7 +147,7 @@ private fun AppNavHost(
 
         composable<Screen.Basket> {
             BasketScreen(
-                basketState = state.basketState,
+                state = state,
                 onIntent = onIntent
             )
         }

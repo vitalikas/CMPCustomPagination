@@ -9,20 +9,23 @@ import lt.vitalijus.cmp_custom_pagination.domain.usecase.basket.AddToBasketUseCa
 import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsEffect
 import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsIntent
 import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsState
+import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsStateMachine
 import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsStore
 
 /**
- * ViewModel using MVI+Redux architecture
- * Wraps the ProductsStore for lifecycle management
+ * ViewModel using MVI+Redux architecture.
+ * Wraps the ProductsStore for lifecycle management.
  */
-class ProductsViewModelMvi(
+class ProductsViewModel(
     pagerFactory: ProductPagingFactory,
-    addToBasketUseCase: AddToBasketUseCase
+    addToBasketUseCase: AddToBasketUseCase,
+    stateMachine: ProductsStateMachine
 ) : ViewModel() {
 
     private val store = ProductsStore(
         pagerFactory = pagerFactory,
         addToBasketUseCase = addToBasketUseCase,
+        stateMachine = stateMachine,
         scope = viewModelScope
     )
 

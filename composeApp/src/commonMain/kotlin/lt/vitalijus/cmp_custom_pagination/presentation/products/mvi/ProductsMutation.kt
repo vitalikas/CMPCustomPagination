@@ -4,8 +4,8 @@ import lt.vitalijus.cmp_custom_pagination.domain.model.BasketItem
 import lt.vitalijus.cmp_custom_pagination.domain.model.Product
 
 /**
- * State mutations - describe HOW the state should change
- * The mutation type itself conveys the state transition
+ * State mutations - describe HOW the state should change.
+ * The mutation type itself conveys the state transition.
  */
 sealed interface ProductsMutation {
 

@@ -2,7 +2,9 @@ package lt.vitalijus.cmp_custom_pagination.presentation.products.mvi
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
@@ -15,12 +17,14 @@ import lt.vitalijus.cmp_custom_pagination.domain.usecase.basket.AddToBasketUseCa
 import lt.vitalijus.cmp_custom_pagination.presentation.products.Screen
 
 /**
- * Redux-style Store for managing Products state
- * Handles intents, dispatches actions, and emits effects
+ * Redux-style Store for managing Products state:
+ * - handles intents, mutations, and emits effects.
+ * - includes state machine validation for intents.
  */
 class ProductsStore(
     pagerFactory: ProductPagingFactory,
     private val addToBasketUseCase: AddToBasketUseCase,
+    private val stateMachine: ProductsStateMachine,
     private val scope: CoroutineScope
 ) {
     private val _state = MutableStateFlow(ProductsState())
@@ -29,10 +33,27 @@ class ProductsStore(
     private val _effects = Channel<ProductsEffect>(Channel.BUFFERED)
     val effects = _effects.receiveAsFlow()
 
+    private val _intentFlow = MutableSharedFlow<ProductsIntent>(
+        extraBufferCapacity = 64,
+        replay = 0
+    )
+    val intentFlow = _intentFlow.asSharedFlow()
+
+    init {
+        // Collect intents and process them through the state machine
+        scope.launch {
+            intentFlow.collect { intent ->
+                handleIntent(intent)
+            }
+        }
+    }
+
     private val pager: ProductPager = pagerFactory.create { event ->
         when (event) {
             is PagingEvent.LoadingChanged -> {
-                dispatchMutation(mutation = ProductsMutation.SetLoading(isLoading = event.isLoading))
+                dispatchMutation(
+                    mutation = ProductsMutation.SetLoading(isLoading = event.isLoading)
+                )
             }
 
             is PagingEvent.ProductsLoaded -> {
@@ -55,29 +76,49 @@ class ProductsStore(
     }
 
     /**
-     * Main entry point for user intents
+     * Main entry point for user intents.
+     * Emits to SharedFlow for state machine processing.
      */
     fun processIntent(intent: ProductsIntent) {
-        when (intent) {
-            is ProductsIntent.LoadMore -> handleLoadMore()
-            is ProductsIntent.AddToBasket -> handleAddToBasket(
-                product = intent.product,
-                quantity = intent.quantity
-            )
+        _intentFlow.tryEmit(intent)
+    }
 
-            is ProductsIntent.UpdateQuantity -> handleUpdateQuantity(
-                productId = intent.productId,
-                newQuantity = intent.newQuantity
-            )
+    /**
+     * Handles intents with state machine validation.
+     * The state machine returns the validated intent to execute based on state transitions.
+     */
+    private fun handleIntent(intent: ProductsIntent) {
+        try {
+            // Validate transition
+            stateMachine.transition(intent)
 
-            is ProductsIntent.RemoveProduct -> handleRemoveProduct(productId = intent.productId)
-            is ProductsIntent.ClearBasket -> handleClearBasket()
-            is ProductsIntent.NavigateTo -> handleNavigation(screen = intent.screen)
+            // Execute the intent
+            when (intent) {
+                ProductsIntent.LoadMore -> handleLoadMore()
+
+                is ProductsIntent.AddToBasket -> handleAddToBasket(intent.product, intent.quantity)
+
+                is ProductsIntent.UpdateQuantity -> handleUpdateQuantity(
+                    intent.productId,
+                    intent.newQuantity
+                )
+
+                is ProductsIntent.RemoveProduct -> handleRemoveProduct(intent.productId)
+
+                ProductsIntent.ClearBasket -> handleClearBasket()
+
+                is ProductsIntent.NavigateTo -> handleNavigation(intent.screen)
+            }
+        } catch (_: IllegalStateException) {
+            // Invalid transition detected
+            println("Invalid transition blocked: ${stateMachine.currentState::class.simpleName} + ${intent::class.simpleName}")
+            emitEffect(ProductsEffect.ShowError("Action not available in current state"))
         }
     }
 
     /**
-     * Dispatch a mutation to update state via reducer
+     * Dispatch a mutation to update state via reducer.
+     * Also updates the state machine based on mutation results.
      */
     private fun dispatchMutation(mutation: ProductsMutation) {
         _state.update { currentState ->
@@ -86,11 +127,10 @@ class ProductsStore(
                 mutation = mutation
             )
         }
+
+        stateMachine.applyMutation(mutation = mutation)
     }
 
-    /**
-     * Emit a one-time side effect
-     */
     private fun emitEffect(effect: ProductsEffect) {
         scope.launch {
             _effects.send(effect)

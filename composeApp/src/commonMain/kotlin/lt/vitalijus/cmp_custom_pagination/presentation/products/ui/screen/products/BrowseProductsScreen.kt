@@ -23,15 +23,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
 import lt.vitalijus.cmp_custom_pagination.core.utils.formatPrice
-import lt.vitalijus.cmp_custom_pagination.presentation.products.BasketState
-import lt.vitalijus.cmp_custom_pagination.presentation.products.BrowseProductsState
 import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsIntent
+import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsState
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component.ProductCard
 
 @Composable
 fun ProductListScreen(
-    browseProductsState: BrowseProductsState,
-    basketState: BasketState,
+    state: ProductsState,
     onIntent: (ProductsIntent) -> Unit,
     lazyListState: LazyListState,
     modifier: Modifier = Modifier
@@ -39,7 +37,7 @@ fun ProductListScreen(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        if (!basketState.isEmpty) {
+        if (!state.isBasketEmpty) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -48,32 +46,32 @@ fun ProductListScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Basket: ${basketState.totalQuantity} items - ${formatPrice(basketState.totalRetailPrice)}",
+                    text = "Basket: ${state.totalQuantity} items - ${formatPrice(state.totalRetailPrice)}",
                     fontWeight = FontWeight.Medium
                 )
             }
         }
 
         LaunchedEffect(Unit) {
-            if (browseProductsState.products.isEmpty()) {
+            if (state.products.isEmpty()) {
                 onIntent(ProductsIntent.LoadMore) // Load initial products
             }
         }
 
         LaunchedEffect(
             lazyListState,
-            browseProductsState.products.size,
-            browseProductsState.isLoadingMore
+            state.products.size,
+            state.isLoadingMore
         ) {
             snapshotFlow { lazyListState.layoutInfo }
                 .distinctUntilChanged()
                 .collect { layoutInfo ->
-                    val totalItemsCount = browseProductsState.products.size
+                    val totalItemsCount = state.products.size
                     val lastVisibleIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
                     val shouldPaginate =
                         lastVisibleIndex >= totalItemsCount - 3 // Trigger when 3 items from the end
                                 && totalItemsCount > 0
-                                && !browseProductsState.isLoadingMore
+                                && !state.isLoadingMore
                     if (shouldPaginate) {
                         onIntent(ProductsIntent.LoadMore)
                     }
@@ -86,7 +84,7 @@ fun ProductListScreen(
             contentPadding = PaddingValues(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(browseProductsState.products) { product ->
+            items(state.products) { product ->
                 ProductCard(
                     product = product,
                     onAddToBasket = { quantity ->
@@ -100,7 +98,7 @@ fun ProductListScreen(
                 )
             }
 
-            if (browseProductsState.isLoadingMore) {
+            if (state.isLoadingMore) {
                 item {
                     Box(
                         modifier = Modifier
