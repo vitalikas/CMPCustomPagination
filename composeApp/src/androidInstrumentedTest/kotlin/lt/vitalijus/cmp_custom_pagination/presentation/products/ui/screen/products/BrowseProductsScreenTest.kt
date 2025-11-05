@@ -15,6 +15,7 @@ import kotlinx.coroutines.runBlocking
 import lt.vitalijus.cmp_custom_pagination.domain.model.BasketItem
 import lt.vitalijus.cmp_custom_pagination.domain.model.Product
 import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsIntent
+import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsState
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -58,17 +59,15 @@ class BrowseProductsScreenTest {
     @Test
     fun testEmptyProductList_ShowsNoProducts() {
         // Given
-        val browseProductsState = BrowseProductsState(
+        val state = ProductsState(
             products = emptyList(),
             isLoadingMore = false
         )
-        val basketState = BasketState()
 
         // When
         composeTestRule.setContent {
             ProductListScreen(
-                browseProductsState = browseProductsState,
-                basketState = basketState,
+                state = state,
                 onIntent = {},
                 lazyListState = rememberLazyListState()
             )
@@ -81,17 +80,15 @@ class BrowseProductsScreenTest {
     @Test
     fun testProductList_DisplaysProducts() {
         // Given
-        val browseProductsState = BrowseProductsState(
+        val state = ProductsState(
             products = sampleProducts,
             isLoadingMore = false
         )
-        val basketState = BasketState()
 
         // When
         composeTestRule.setContent {
             ProductListScreen(
-                browseProductsState = browseProductsState,
-                basketState = basketState,
+                state = state,
                 onIntent = {},
                 lazyListState = rememberLazyListState()
             )
@@ -108,17 +105,15 @@ class BrowseProductsScreenTest {
     @Test
     fun testProductPrice_DisplaysCorrectly() {
         // Given
-        val browseProductsState = BrowseProductsState(
+        val state = ProductsState(
             products = listOf(sampleProducts[0]),
             isLoadingMore = false
         )
-        val basketState = BasketState()
 
         // When
         composeTestRule.setContent {
             ProductListScreen(
-                browseProductsState = browseProductsState,
-                basketState = basketState,
+                state = state,
                 onIntent = {},
                 lazyListState = rememberLazyListState()
             )
@@ -131,18 +126,16 @@ class BrowseProductsScreenTest {
     @Test
     fun testAddToBasket_TriggersIntent() {
         // Given
-        val browseProductsState = BrowseProductsState(
+        val state = ProductsState(
             products = listOf(sampleProducts[0]),
             isLoadingMore = false
         )
-        val basketState = BasketState()
         val intents = mutableListOf<ProductsIntent>()
 
         // When
         composeTestRule.setContent {
             ProductListScreen(
-                browseProductsState = browseProductsState,
-                basketState = basketState,
+                state = state,
                 onIntent = {
                     intents.add(it)
                 },
@@ -164,18 +157,16 @@ class BrowseProductsScreenTest {
     @Test
     fun testQuantityButtons_IncrementAndDecrement() {
         // Given
-        val browseProductsState = BrowseProductsState(
+        val state = ProductsState(
             products = listOf(sampleProducts[0]),
             isLoadingMore = false
         )
-        val basketState = BasketState()
         val intents = mutableListOf<ProductsIntent>()
 
         // When
         composeTestRule.setContent {
             ProductListScreen(
-                browseProductsState = browseProductsState,
-                basketState = basketState,
+                state = state,
                 onIntent = { intents.add(it) },
                 lazyListState = rememberLazyListState()
             )
@@ -208,12 +199,10 @@ class BrowseProductsScreenTest {
     @Test
     fun testBasketDisplay_ShowsWhenNotEmpty() {
         // Given
-        val browseProductsState = BrowseProductsState(
+        val state = ProductsState(
             products = sampleProducts,
-            isLoadingMore = false
-        )
-        val basketState = BasketState(
-            items = listOf(
+            isLoadingMore = false,
+            basketItems = listOf(
                 BasketItem(
                     product = sampleProducts[0],
                     quantity = 2
@@ -224,8 +213,7 @@ class BrowseProductsScreenTest {
         // When
         composeTestRule.setContent {
             ProductListScreen(
-                browseProductsState = browseProductsState,
-                basketState = basketState,
+                state = state,
                 onIntent = {},
                 lazyListState = rememberLazyListState()
             )
@@ -238,17 +226,15 @@ class BrowseProductsScreenTest {
     @Test
     fun testBasketDisplay_HiddenWhenEmpty() {
         // Given
-        val browseProductsState = BrowseProductsState(
+        val state = ProductsState(
             products = sampleProducts,
             isLoadingMore = false
         )
-        val basketState = BasketState()
 
         // When
         composeTestRule.setContent {
             ProductListScreen(
-                browseProductsState = browseProductsState,
-                basketState = basketState,
+                state = state,
                 onIntent = {},
                 lazyListState = rememberLazyListState()
             )
@@ -263,19 +249,17 @@ class BrowseProductsScreenTest {
         // Given
         val intents = mutableListOf<ProductsIntent>()
         val listState = LazyListState()
-        val browseStateHolder = mutableStateOf(
-            BrowseProductsState(
+        val stateHolder = mutableStateOf(
+            ProductsState(
                 products = emptyList(),
                 isLoadingMore = false
             )
         )
-        val basketState = BasketState()
 
         // When
         composeTestRule.setContent {
             ProductListScreen(
-                browseProductsState = browseStateHolder.value,
-                basketState = basketState,
+                state = stateHolder.value,
                 onIntent = { intents.add(it) },
                 lazyListState = listState
             )
@@ -289,7 +273,7 @@ class BrowseProductsScreenTest {
 
         // Simulate loading state by changing the flag and triggering recomposition
         composeTestRule.runOnIdle {
-            browseStateHolder.value = browseStateHolder.value.copy(isLoadingMore = true)
+            stateHolder.value = stateHolder.value.copy(isLoadingMore = true)
         }
 
         composeTestRule.waitForIdle()
@@ -301,17 +285,15 @@ class BrowseProductsScreenTest {
     @Test
     fun testLoadingIndicator_NotDisplayedWhenNotLoading() {
         // Given
-        val browseProductsState = BrowseProductsState(
+        val state = ProductsState(
             products = sampleProducts,
             isLoadingMore = false
         )
-        val basketState = BasketState()
 
         // When
         composeTestRule.setContent {
             ProductListScreen(
-                browseProductsState = browseProductsState,
-                basketState = basketState,
+                state = state,
                 onIntent = {},
                 lazyListState = rememberLazyListState()
             )
@@ -327,18 +309,16 @@ class BrowseProductsScreenTest {
     @Test
     fun testMultipleProducts_CanInteractWithEach() {
         // Given
-        val browseProductsState = BrowseProductsState(
+        val state = ProductsState(
             products = sampleProducts,
             isLoadingMore = false
         )
-        val basketState = BasketState()
         val intents = mutableListOf<ProductsIntent>()
 
         // When
         composeTestRule.setContent {
             ProductListScreen(
-                browseProductsState = browseProductsState,
-                basketState = basketState,
+                state = state,
                 onIntent = { intents.add(it) },
                 lazyListState = rememberLazyListState()
             )
@@ -363,17 +343,15 @@ class BrowseProductsScreenTest {
     @Test
     fun testProductCategories_DisplayedInUppercase() {
         // Given
-        val browseProductsState = BrowseProductsState(
+        val state = ProductsState(
             products = sampleProducts,
             isLoadingMore = false
         )
-        val basketState = BasketState()
 
         // When
         composeTestRule.setContent {
             ProductListScreen(
-                browseProductsState = browseProductsState,
-                basketState = basketState,
+                state = state,
                 onIntent = {},
                 lazyListState = rememberLazyListState()
             )
@@ -388,18 +366,16 @@ class BrowseProductsScreenTest {
     @Test
     fun testInitialLoad_TriggersLoadMoreIntent() {
         // Given
-        val browseProductsState = BrowseProductsState(
+        val state = ProductsState(
             products = emptyList(),
             isLoadingMore = false
         )
-        val basketState = BasketState()
         val intents = mutableListOf<ProductsIntent>()
 
         // When
         composeTestRule.setContent {
             ProductListScreen(
-                browseProductsState = browseProductsState,
-                basketState = basketState,
+                state = state,
                 onIntent = { intents.add(it) },
                 lazyListState = rememberLazyListState()
             )
@@ -427,21 +403,19 @@ class BrowseProductsScreenTest {
             )
         }
 
-        val browseStateHolder = mutableStateOf(
-            BrowseProductsState(
+        val stateHolder = mutableStateOf(
+            ProductsState(
                 products = manyProducts,
                 isLoadingMore = false
             )
         )
-        val basketState = BasketState()
         val intents = mutableListOf<ProductsIntent>()
         val listState = LazyListState()
 
         // When
         composeTestRule.setContent {
             ProductListScreen(
-                browseProductsState = browseStateHolder.value,
-                basketState = basketState,
+                state = stateHolder.value,
                 onIntent = { intents.add(it) },
                 lazyListState = listState
             )
@@ -465,7 +439,7 @@ class BrowseProductsScreenTest {
 
         // Simulate loading state by updating the state properly
         composeTestRule.runOnIdle {
-            browseStateHolder.value = browseStateHolder.value.copy(isLoadingMore = true)
+            stateHolder.value = stateHolder.value.copy(isLoadingMore = true)
         }
 
         composeTestRule.waitForIdle()
@@ -486,12 +460,10 @@ class BrowseProductsScreenTest {
     @Test
     fun testBasketTotals_CalculatedCorrectly() {
         // Given
-        val browseProductsState = BrowseProductsState(
+        val state = ProductsState(
             products = sampleProducts,
-            isLoadingMore = false
-        )
-        val basketState = BasketState(
-            items = listOf(
+            isLoadingMore = false,
+            basketItems = listOf(
                 BasketItem(
                     product = sampleProducts[0], // 100 cents * 2 = 200 cents = $2.00
                     quantity = 2
@@ -506,8 +478,7 @@ class BrowseProductsScreenTest {
         // When
         composeTestRule.setContent {
             ProductListScreen(
-                browseProductsState = browseProductsState,
-                basketState = basketState,
+                state = state,
                 onIntent = {},
                 lazyListState = rememberLazyListState()
             )
@@ -535,17 +506,15 @@ class BrowseProductsScreenTest {
             thumbnail = null
         )
 
-        val browseProductsState = BrowseProductsState(
+        val state = ProductsState(
             products = listOf(productWithLongDescription),
             isLoadingMore = false
         )
-        val basketState = BasketState()
 
         // When
         composeTestRule.setContent {
             ProductListScreen(
-                browseProductsState = browseProductsState,
-                basketState = basketState,
+                state = state,
                 onIntent = {},
                 lazyListState = rememberLazyListState()
             )

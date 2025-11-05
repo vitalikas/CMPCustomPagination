@@ -31,7 +31,7 @@ abstract class StateMachine<S, I, M>(
 ) {
 
     var currentState: S = initialState
-        protected set
+        private set
 
     /**
      * Validates and performs state transition based on intent.

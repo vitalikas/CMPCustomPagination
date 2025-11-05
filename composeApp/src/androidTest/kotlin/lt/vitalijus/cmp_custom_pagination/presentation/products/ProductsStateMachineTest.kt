@@ -11,22 +11,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-/**
- * Test helper extension function to check if a transition is valid.
- * This replaces the isValidTransition method that was removed from production code.
- */
-private fun ProductsStateMachine.isValidTransition(intent: ProductsIntent): Boolean {
-    return try {
-        val initialState = currentState
-        transition(intent)
-        // Restore state after check
-        currentState = initialState
-        true
-    } catch (e: IllegalStateException) {
-        false
-    }
-}
-
 class ProductsStateMachineTest {
 
     private lateinit var stateMachine: ProductsStateMachine
@@ -68,12 +52,12 @@ class ProductsStateMachineTest {
 
     @Test
     fun testIdleState_IsValidTransition_LoadMore_ReturnsTrue() {
-        assertTrue(stateMachine.isValidTransition(ProductsIntent.LoadMore))
+        assertTrue(stateMachine.isTransitionValid(ProductsIntent.LoadMore))
     }
 
     @Test
     fun testIdleState_IsValidTransition_AddToBasket_ReturnsFalse() {
-        assertFalse(stateMachine.isValidTransition(ProductsIntent.AddToBasket(sampleProduct, 1)))
+        assertFalse(stateMachine.isTransitionValid(ProductsIntent.AddToBasket(sampleProduct, 1)))
     }
 
     // Tests for LoadingProducts state transitions
@@ -99,7 +83,7 @@ class ProductsStateMachineTest {
     @Test
     fun testLoadingState_IsValidTransition_AddToBasket_ReturnsFalse() {
         stateMachine.transition(ProductsIntent.LoadMore) // Go to Loading
-        assertFalse(stateMachine.isValidTransition(ProductsIntent.AddToBasket(sampleProduct, 1)))
+        assertFalse(stateMachine.isTransitionValid(ProductsIntent.AddToBasket(sampleProduct, 1)))
     }
 
     // Tests for Ready state transitions
@@ -148,12 +132,12 @@ class ProductsStateMachineTest {
     @Test
     fun testReadyState_IsValidTransition_AllIntents_ReturnsTrue() {
         setupReadyState()
-        assertTrue(stateMachine.isValidTransition(ProductsIntent.LoadMore))
-        assertTrue(stateMachine.isValidTransition(ProductsIntent.AddToBasket(sampleProduct, 1)))
-        assertTrue(stateMachine.isValidTransition(ProductsIntent.UpdateQuantity(1L, 5)))
-        assertTrue(stateMachine.isValidTransition(ProductsIntent.RemoveProduct(1L)))
-        assertTrue(stateMachine.isValidTransition(ProductsIntent.ClearBasket))
-        assertTrue(stateMachine.isValidTransition(ProductsIntent.NavigateTo(Screen.Basket)))
+        assertTrue(stateMachine.isTransitionValid(ProductsIntent.LoadMore))
+        assertTrue(stateMachine.isTransitionValid(ProductsIntent.AddToBasket(sampleProduct, 1)))
+        assertTrue(stateMachine.isTransitionValid(ProductsIntent.UpdateQuantity(1L, 5)))
+        assertTrue(stateMachine.isTransitionValid(ProductsIntent.RemoveProduct(1L)))
+        assertTrue(stateMachine.isTransitionValid(ProductsIntent.ClearBasket))
+        assertTrue(stateMachine.isTransitionValid(ProductsIntent.NavigateTo(Screen.Basket)))
     }
 
     // Tests for Error state transitions
@@ -180,13 +164,13 @@ class ProductsStateMachineTest {
     @Test
     fun testErrorState_IsValidTransition_LoadMore_ReturnsTrue() {
         setupErrorState()
-        assertTrue(stateMachine.isValidTransition(ProductsIntent.LoadMore))
+        assertTrue(stateMachine.isTransitionValid(ProductsIntent.LoadMore))
     }
 
     @Test
     fun testErrorState_IsValidTransition_AddToBasket_ReturnsFalse() {
         setupErrorState()
-        assertFalse(stateMachine.isValidTransition(ProductsIntent.AddToBasket(sampleProduct, 1)))
+        assertFalse(stateMachine.isTransitionValid(ProductsIntent.AddToBasket(sampleProduct, 1)))
     }
 
     // Tests for ProcessingBasket state transitions
@@ -212,13 +196,13 @@ class ProductsStateMachineTest {
     @Test
     fun testProcessingBasketState_IsValidTransition_NavigateTo_ReturnsTrue() {
         setupProcessingBasketState()
-        assertTrue(stateMachine.isValidTransition(ProductsIntent.NavigateTo(Screen.Basket)))
+        assertTrue(stateMachine.isTransitionValid(ProductsIntent.NavigateTo(Screen.Basket)))
     }
 
     @Test
     fun testProcessingBasketState_IsValidTransition_AddToBasket_ReturnsFalse() {
         setupProcessingBasketState()
-        assertFalse(stateMachine.isValidTransition(ProductsIntent.AddToBasket(sampleProduct, 1)))
+        assertFalse(stateMachine.isTransitionValid(ProductsIntent.AddToBasket(sampleProduct, 1)))
     }
 
     // Tests for onMutationComplete
