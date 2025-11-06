@@ -23,7 +23,7 @@ fun NavigationBottomBar(
     basketNotEmpty: Boolean,
     basketQuantity: Int
 ) {
-    val screens = listOf(Screen.ProductList, Screen.Basket)
+    val screens = listOf(Screen.ProductList, Screen.Basket, Screen.Settings)
 
     NavigationBar {
         screens.forEach { screen ->

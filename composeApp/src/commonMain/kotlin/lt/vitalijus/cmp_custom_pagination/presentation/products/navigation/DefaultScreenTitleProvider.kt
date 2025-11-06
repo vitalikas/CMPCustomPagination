@@ -6,6 +6,7 @@ class DefaultScreenTitleProvider : ScreenTitleProvider {
         return when {
             route?.contains("ProductList") == true -> "Product List"
             route?.contains("Basket") == true -> "Shopping Basket"
+            route?.contains("Settings") == true -> "Settings"
             else -> "Unknown route"
         }
     }

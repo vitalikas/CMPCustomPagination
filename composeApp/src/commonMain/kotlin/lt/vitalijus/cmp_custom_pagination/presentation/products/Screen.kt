@@ -18,4 +18,10 @@ sealed interface Screen {
         override val route: String = "Products"
         override val iconText: String = "📋"
     }
+
+    @Serializable
+    data object Settings : Screen {
+        override val route: String = "Settings"
+        override val iconText: String = "⚙️"
+    }
 }

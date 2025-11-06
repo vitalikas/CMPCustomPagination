@@ -34,6 +34,7 @@ import lt.vitalijus.cmp_custom_pagination.presentation.products.navigation.Scree
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component.NavigationBottomBar
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.basket.BasketScreen
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.products.ProductListScreen
+import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.settings.SettingsScreen
 import org.koin.core.component.inject
 
 @Composable
@@ -101,6 +102,7 @@ fun RootScreen() {
             val currentScreen = when {
                 currentRoute?.contains("ProductList") == true -> Screen.ProductList
                 currentRoute?.contains("Basket") == true -> Screen.Basket
+                currentRoute?.contains("Settings") == true -> Screen.Settings
                 else -> Screen.ProductList
             }
 
@@ -150,6 +152,10 @@ private fun AppNavHost(
                 state = state,
                 onIntent = onIntent
             )
+        }
+
+        composable<Screen.Settings> {
+            SettingsScreen()
         }
     }
 }

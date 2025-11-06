@@ -1,5 +1,6 @@
 package lt.vitalijus.cmp_custom_pagination.presentation.products.navigation
 
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import lt.vitalijus.cmp_custom_pagination.presentation.products.Screen
 
@@ -14,7 +15,7 @@ class NavigationController(
         }
 
         navController.navigate(screen) {
-            popUpTo(screen.route) {
+            popUpTo(navController.graph.findStartDestination().id) {
                 saveState = true
             }
             launchSingleTop = true
@@ -31,6 +32,7 @@ class NavigationController(
         return when {
             route?.contains("ProductList") == true -> Screen.ProductList
             route?.contains("Basket") == true -> Screen.Basket
+            route?.contains("Settings") == true -> Screen.Settings
             else -> Screen.ProductList
         }
     }
