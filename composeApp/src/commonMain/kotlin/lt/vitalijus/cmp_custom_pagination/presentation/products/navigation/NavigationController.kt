@@ -30,9 +30,10 @@ class NavigationController(
     override fun getCurrentScreen(): Screen? {
         val route = getCurrentRoute()
         return when {
+            route?.contains("ProductDetails") == true -> null
             route?.contains("ProductList") == true -> Screen.ProductList
             route?.contains("Basket") == true -> Screen.Basket
-            route?.contains("Settings") == true -> Screen.Settings
+            route?.contains("Favorites") == true -> Screen.Favorites
             else -> Screen.ProductList
         }
     }

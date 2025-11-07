@@ -12,6 +12,7 @@ androidx-espresso = "3.6.1"
 androidx-lifecycle = "2.9.1"
 androidx-navigation = "2.9.0-beta03"
 androidx-testExt = "1.2.1"
+coil = "3.0.4"
 composeHotReload = "1.0.0-alpha11"
 composeMultiplatform = "1.8.2"
 junit = "4.13.2"
@@ -49,6 +50,9 @@ androidx-navigation-compose = { module = "org.jetbrains.androidx.navigation:navi
 koin-core = { group = "io.insert-koin", name = "koin-core", version.ref = "koin" }
 koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koin" }
 koin-androidx-compose = { group = "io.insert-koin", name = "koin-androidx-compose", version.ref = "koin" }
+
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 
 compose_material_icons_extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "composeMultiplatform" }
 

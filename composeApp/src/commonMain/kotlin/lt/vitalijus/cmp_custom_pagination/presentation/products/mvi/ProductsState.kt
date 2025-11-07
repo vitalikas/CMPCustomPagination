@@ -9,6 +9,7 @@ import lt.vitalijus.cmp_custom_pagination.domain.model.Product
 data class ProductsState(
     val products: List<Product> = emptyList(),
     val basketItems: List<BasketItem> = emptyList(),
+    val favoriteProductIds: Set<Long> = emptySet(),
     val isLoadingMore: Boolean = false,
     val error: String? = null
 ) {
@@ -24,4 +25,7 @@ data class ProductsState(
 
     val isBasketEmpty: Boolean
         get() = basketItems.isEmpty()
+
+    val favoriteProducts: List<Product>
+        get() = products.filter { it.id in favoriteProductIds }
 }

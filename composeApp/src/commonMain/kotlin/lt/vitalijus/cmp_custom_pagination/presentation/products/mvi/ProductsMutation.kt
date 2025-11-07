@@ -32,4 +32,10 @@ sealed interface ProductsMutation {
     value class BasketUpdated(
         val items: List<BasketItem>
     ) : ProductsMutation
+
+    // Favorite mutations
+    @JvmInline
+    value class FavoriteToggled(
+        val productId: Long
+    ) : ProductsMutation
 }

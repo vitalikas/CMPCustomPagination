@@ -6,6 +6,7 @@ sealed interface ProductsEffect {
 
     data class ShowError(val message: String) : ProductsEffect
     data object ShowBasketUpdated : ProductsEffect
+    data class ShowFavoriteToggled(val isAdded: Boolean) : ProductsEffect
 
     // Navigation effects
     data class NavigateTo(val screen: Screen) : ProductsEffect

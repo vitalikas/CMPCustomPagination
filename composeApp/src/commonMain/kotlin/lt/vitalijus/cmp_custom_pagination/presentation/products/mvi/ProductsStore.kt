@@ -85,7 +85,8 @@ class ProductsStore(
 
     /**
      * Handles intents with state machine validation.
-     * The state machine returns the validated intent to execute based on state transitions.
+     * The state machine validates transitions and blocks invalid ones.
+     * Invalid transitions during pagination are expected (fast scrolling) and handled silently.
      */
     private fun handleIntent(intent: ProductsIntent) {
         try {
@@ -108,11 +109,12 @@ class ProductsStore(
                 ProductsIntent.ClearBasket -> handleClearBasket()
 
                 is ProductsIntent.NavigateTo -> handleNavigation(intent.screen)
+
+                is ProductsIntent.ToggleFavorite -> handleToggleFavorite(intent.productId)
             }
         } catch (_: IllegalStateException) {
-            // Invalid transition detected
-            println("Invalid transition blocked: ${stateMachine.currentState::class.simpleName} + ${intent::class.simpleName}")
-            emitEffect(ProductsEffect.ShowError("Action not available in current state"))
+            // Invalid transition blocked by state machine
+            // This is expected during fast scrolling/pagination - silently ignore
         }
     }
 
@@ -196,5 +198,13 @@ class ProductsStore(
 
     private fun handleNavigation(screen: Screen) {
         emitEffect(effect = ProductsEffect.NavigateTo(screen))
+    }
+
+    private fun handleToggleFavorite(productId: Long) {
+        val currentFavorites = _state.value.favoriteProductIds
+        val isAdded = !currentFavorites.contains(productId)
+
+        dispatchMutation(mutation = ProductsMutation.FavoriteToggled(productId = productId))
+        emitEffect(effect = ProductsEffect.ShowFavoriteToggled(isAdded = isAdded))
     }
 }

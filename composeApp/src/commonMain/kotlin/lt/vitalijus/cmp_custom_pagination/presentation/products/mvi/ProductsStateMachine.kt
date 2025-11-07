@@ -20,13 +20,15 @@ class ProductsStateMachine(
             is ProductsTransitionState.Idle -> when (intent) {
                 ProductsIntent.LoadMore -> ProductsTransitionState.LoadingProducts
                 is ProductsIntent.NavigateTo -> ProductsTransitionState.Idle
+                is ProductsIntent.ToggleFavorite -> ProductsTransitionState.Idle
                 else -> throw IllegalStateException("Invalid transition from Idle: $intent")
             }
 
             is ProductsTransitionState.LoadingProducts -> when (intent) {
-                // While loading, user can only navigate
-                // The transition to Ready/Error happens in onMutationComplete when loading finishes
+                // While loading, only navigation is allowed
+                // LoadMore is blocked - the transition to Ready/Error happens in onMutationComplete
                 is ProductsIntent.NavigateTo -> currentState
+                is ProductsIntent.ToggleFavorite -> currentState
                 else -> throw IllegalStateException("Invalid transition from LoadingProducts: $intent")
             }
 
@@ -37,11 +39,13 @@ class ProductsStateMachine(
                 is ProductsIntent.RemoveProduct -> ProductsTransitionState.ProcessingBasket
                 ProductsIntent.ClearBasket -> ProductsTransitionState.ProcessingBasket
                 is ProductsIntent.NavigateTo -> ProductsTransitionState.Ready
+                is ProductsIntent.ToggleFavorite -> ProductsTransitionState.Ready
             }
 
             is ProductsTransitionState.Error -> when (intent) {
                 ProductsIntent.LoadMore -> ProductsTransitionState.LoadingProducts
                 is ProductsIntent.NavigateTo -> currentState
+                is ProductsIntent.ToggleFavorite -> currentState
                 else -> throw IllegalStateException("Invalid transition from Error: $intent")
             }
 
@@ -49,6 +53,7 @@ class ProductsStateMachine(
                 // While processing basket, user can only navigate
                 // The transition to Ready happens in onMutationComplete when operation finishes
                 is ProductsIntent.NavigateTo -> currentState
+                is ProductsIntent.ToggleFavorite -> currentState
                 else -> throw IllegalStateException("Invalid transition from ProcessingBasket: $intent")
             }
         }
@@ -68,6 +73,8 @@ class ProductsStateMachine(
             is ProductsMutation.LoadingError -> ProductsTransitionState.Error(mutation.message)
 
             is ProductsMutation.BasketUpdated -> ProductsTransitionState.Ready
+
+            is ProductsMutation.FavoriteToggled -> currentState
         }
     }
 }

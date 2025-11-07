@@ -20,7 +20,7 @@ private val LightGreenColorScheme = lightColorScheme(
     onBackground = GreenOnBackground,
     surface = GreenSurface,
     onSurface = GreenOnSurface,
-    surfaceVariant = GreenBackground,
+    surfaceVariant = GreenSurface,
     onSurfaceVariant = GreenOnSurface
 )
 

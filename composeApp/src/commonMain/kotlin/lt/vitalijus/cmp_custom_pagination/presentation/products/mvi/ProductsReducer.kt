@@ -42,6 +42,17 @@ object ProductsReducer {
                     error = null
                 )
             }
+
+            is ProductsMutation.FavoriteToggled -> {
+                val updatedFavorites = if (mutation.productId in state.favoriteProductIds) {
+                    state.favoriteProductIds - mutation.productId
+                } else {
+                    state.favoriteProductIds + mutation.productId
+                }
+                state.copy(
+                    favoriteProductIds = updatedFavorites
+                )
+            }
         }
     }
 }

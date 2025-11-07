@@ -4,43 +4,59 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import lt.vitalijus.cmp_custom_pagination.presentation.products.Screen
+import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component.AppIcons
 
 @Composable
 fun NavigationBottomBar(
     onNavigateToScreen: (Screen) -> Unit,
     currentScreen: Screen?,
     basketNotEmpty: Boolean,
-    basketQuantity: Int
+    basketQuantity: Int,
+    favoritesCount: Int = 0
 ) {
-    val screens = listOf(Screen.ProductList, Screen.Basket, Screen.Settings)
+    val screens = listOf(Screen.ProductList, Screen.Basket, Screen.Favorites)
 
-    NavigationBar {
+    NavigationBar(
+        containerColor = MaterialTheme.colorScheme.secondaryContainer
+    ) {
         screens.forEach { screen ->
             val isSelected = currentScreen == screen
+
+            val iconVector = when (screen) {
+                Screen.ProductList -> AppIcons.GridView
+                Screen.Basket -> AppIcons.ShoppingCart
+                Screen.Favorites -> AppIcons.FavoriteBorder
+                else -> AppIcons.GridView
+            }
 
             NavigationBarItem(
                 selected = isSelected,
                 onClick = { onNavigateToScreen(screen) },
                 icon = {
-                    if (screen is Screen.Basket && basketNotEmpty) {
+                    // Show badge for Basket if items present
+                    if (screen == Screen.Basket && basketNotEmpty) {
                         BadgedBox(
                             badge = {
                                 Badge(
                                     modifier = Modifier
                                         .size(24.dp)
                                         .clip(CircleShape),
-                                    containerColor = Color.Red
+                                    containerColor = Color(0xFF1B5E20)
                                 ) {
                                     Text(
                                         text = basketQuantity.toString(),
@@ -51,19 +67,51 @@ fun NavigationBottomBar(
                                 }
                             }
                         ) {
-                            Text(
-                                text = screen.iconText,
-                                fontSize = 20.sp
+                            Icon(
+                                imageVector = iconVector,
+                                contentDescription = screen.route
+                            )
+                        }
+                    }
+                    // Show badge for Favorites if items present
+                    else if (screen == Screen.Favorites && favoritesCount > 0) {
+                        BadgedBox(
+                            badge = {
+                                Badge(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .clip(CircleShape),
+                                    containerColor = Color(0xFF1B5E20)
+                                ) {
+                                    Text(
+                                        text = favoritesCount.toString(),
+                                        color = Color.White,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = iconVector,
+                                contentDescription = screen.route
                             )
                         }
                     } else {
-                        Text(
-                            text = screen.iconText,
-                            fontSize = 20.sp
+                        Icon(
+                            imageVector = iconVector,
+                            contentDescription = screen.route
                         )
                     }
                 },
-                label = { Text(text = screen.route) }
+                label = { Text(text = screen.route) },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = Color.White,
+                    selectedTextColor = Color.White,
+                    indicatorColor = Color.Transparent,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             )
         }
     }

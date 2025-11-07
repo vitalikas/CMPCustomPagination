@@ -10,9 +10,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -24,12 +26,14 @@ import androidx.compose.ui.unit.dp
 import lt.vitalijus.cmp_custom_pagination.core.utils.formatPrice
 import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsIntent
 import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsState
+import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component.AppIcons
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component.BasketItemCard
 
 @Composable
 fun BasketScreen(
     state: ProductsState,
     onIntent: (ProductsIntent) -> Unit,
+    onProductClick: (Long) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -39,9 +43,10 @@ fun BasketScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "🛒",
-                        style = MaterialTheme.typography.displayLarge
+                    Icon(
+                        imageVector = AppIcons.ShoppingCart,
+                        contentDescription = "Empty basket",
+                        modifier = Modifier.size(64.dp)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
@@ -71,6 +76,9 @@ fun BasketScreen(
                         },
                         onRemove = {
                             onIntent(ProductsIntent.RemoveProduct(basketItem.product.id))
+                        },
+                        onItemClick = {
+                            onProductClick(basketItem.product.id)
                         }
                     )
                 }

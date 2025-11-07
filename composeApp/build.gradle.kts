@@ -76,6 +76,8 @@ kotlin {
             implementation(libs.koin.core)
 
             implementation(libs.androidx.lifecycle.viewmodel.compose)
+            implementation(libs.coil.compose)
+            implementation(libs.coil.network.ktor)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

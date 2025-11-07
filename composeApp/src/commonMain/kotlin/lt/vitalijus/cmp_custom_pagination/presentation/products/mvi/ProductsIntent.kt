@@ -17,4 +17,5 @@ sealed interface ProductsIntent {
     data class RemoveProduct(val productId: Long) : ProductsIntent
     data object ClearBasket : ProductsIntent
     data class NavigateTo(val screen: Screen) : ProductsIntent
+    data class ToggleFavorite(val productId: Long) : ProductsIntent
 }

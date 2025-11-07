@@ -5,23 +5,24 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed interface Screen {
     val route: String
-    val iconText: String
 
     @Serializable
     data object Basket : Screen {
         override val route: String = "Basket"
-        override val iconText: String = "🛒"
     }
 
     @Serializable
     data object ProductList : Screen {
         override val route: String = "Products"
-        override val iconText: String = "📋"
     }
 
     @Serializable
-    data object Settings : Screen {
-        override val route: String = "Settings"
-        override val iconText: String = "⚙️"
+    data object Favorites : Screen {
+        override val route: String = "Favorites"
+    }
+
+    @Serializable
+    data class ProductDetails(val productId: Long) : Screen {
+        override val route: String = "ProductDetails/$productId"
     }
 }
