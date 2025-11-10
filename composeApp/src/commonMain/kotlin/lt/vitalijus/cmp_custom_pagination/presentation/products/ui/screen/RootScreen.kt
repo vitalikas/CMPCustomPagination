@@ -164,14 +164,23 @@ fun RootScreen() {
 
             NavigationBottomBar(
                 onNavigateToScreen = { screen ->
-                    if (screen == Screen.Basket) {
-                        // Always pop to root then navigate, to fix Basket as fully focused
-                        while (navController.previousBackStackEntry != null && navController.currentDestination?.route != null && navController.currentDestination?.route != Screen.Basket.route) {
-                            navController.popBackStack()
+                    when (screen) {
+                        Screen.Basket -> {
+                            // Always pop to root then navigate, to fix Basket as fully focused
+                            while (navController.previousBackStackEntry != null && navController.currentDestination?.route != null && navController.currentDestination?.route != Screen.Basket.route) {
+                                navController.popBackStack()
+                            }
+                            navController.navigate(Screen.Basket)
                         }
-                        navController.navigate(Screen.Basket)
-                    } else {
-                        viewModel.processIntent(ProductsIntent.NavigateTo(screen))
+                        Screen.ProductList -> {
+                            while (navController.previousBackStackEntry != null && navController.currentDestination?.route != null && navController.currentDestination?.route != Screen.ProductList.route) {
+                                navController.popBackStack()
+                            }
+                            navController.navigate(Screen.ProductList)
+                        }
+                        else -> {
+                            viewModel.processIntent(ProductsIntent.NavigateTo(screen))
+                        }
                     }
                 },
                 currentScreen = currentScreen,
