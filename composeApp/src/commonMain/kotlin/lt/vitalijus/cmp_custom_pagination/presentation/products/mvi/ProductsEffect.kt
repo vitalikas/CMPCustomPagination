@@ -11,4 +11,8 @@ sealed interface ProductsEffect {
     // Navigation effects
     data class NavigateTo(val screen: Screen) : ProductsEffect
     data object NavigateBack : ProductsEffect
+
+    // Order effects
+    data class OrderCreated(val orderId: String) : ProductsEffect
+    data class OrderDelivered(val orderId: String) : ProductsEffect
 }

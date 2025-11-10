@@ -40,6 +40,11 @@ class ProductsStateMachine(
                 ProductsIntent.ClearBasket -> ProductsTransitionState.ProcessingBasket
                 is ProductsIntent.NavigateTo -> ProductsTransitionState.Ready
                 is ProductsIntent.ToggleFavorite -> ProductsTransitionState.Ready
+                is ProductsIntent.SetDeliveryAddress -> ProductsTransitionState.Ready
+                is ProductsIntent.SetPaymentMethod -> ProductsTransitionState.Ready
+                ProductsIntent.ConfirmOrder -> ProductsTransitionState.ProcessingBasket
+                is ProductsIntent.UpdateOrderStatus -> ProductsTransitionState.Ready
+                is ProductsIntent.RateProduct -> ProductsTransitionState.Ready
             }
 
             is ProductsTransitionState.Error -> when (intent) {
@@ -75,6 +80,16 @@ class ProductsStateMachine(
             is ProductsMutation.BasketUpdated -> ProductsTransitionState.Ready
 
             is ProductsMutation.FavoriteToggled -> currentState
+
+            is ProductsMutation.DeliveryAddressSet -> currentState
+
+            is ProductsMutation.PaymentMethodSet -> currentState
+
+            is ProductsMutation.OrderCreated -> ProductsTransitionState.Ready
+
+            is ProductsMutation.OrderUpdated -> currentState
+
+            is ProductsMutation.ProductRated -> currentState
         }
     }
 }

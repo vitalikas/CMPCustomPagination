@@ -9,8 +9,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import lt.vitalijus.cmp_custom_pagination.core.utils.currentTimeMillis
 import lt.vitalijus.cmp_custom_pagination.core.utils.pager.ProductPager
+import lt.vitalijus.cmp_custom_pagination.data.persistence.OrderRepository
 import lt.vitalijus.cmp_custom_pagination.domain.model.Product
+import lt.vitalijus.cmp_custom_pagination.domain.model.DeliveryAddress
+import lt.vitalijus.cmp_custom_pagination.domain.model.PaymentMethod
+import lt.vitalijus.cmp_custom_pagination.domain.model.Order
+import lt.vitalijus.cmp_custom_pagination.domain.model.OrderStatus
+import lt.vitalijus.cmp_custom_pagination.domain.model.ProductRating
 import lt.vitalijus.cmp_custom_pagination.domain.paging.PagingEvent
 import lt.vitalijus.cmp_custom_pagination.domain.paging.ProductPagingFactory
 import lt.vitalijus.cmp_custom_pagination.domain.usecase.basket.AddToBasketUseCase
@@ -25,6 +32,7 @@ class ProductsStore(
     pagerFactory: ProductPagingFactory,
     private val addToBasketUseCase: AddToBasketUseCase,
     private val stateMachine: ProductsStateMachine,
+    private val orderRepository: OrderRepository,
     private val scope: CoroutineScope
 ) {
     private val _state = MutableStateFlow(ProductsState())
@@ -40,11 +48,32 @@ class ProductsStore(
     val intentFlow = _intentFlow.asSharedFlow()
 
     init {
+        // Load persisted data
+        scope.launch {
+            loadPersistedData()
+        }
+
         // Collect intents and process them through the state machine
         scope.launch {
             intentFlow.collect { intent ->
                 handleIntent(intent)
             }
+        }
+    }
+
+    private suspend fun loadPersistedData() {
+        val orders = orderRepository.getOrders()
+        val favorites = orderRepository.getFavorites()
+        val deliveryAddress = orderRepository.getLastDeliveryAddress()
+        val paymentMethod = orderRepository.getLastPaymentMethod()
+
+        _state.update {
+            it.copy(
+                orders = orders,
+                favoriteProductIds = favorites,
+                currentDeliveryAddress = deliveryAddress,
+                currentPaymentMethod = paymentMethod
+            )
         }
     }
 
@@ -111,6 +140,24 @@ class ProductsStore(
                 is ProductsIntent.NavigateTo -> handleNavigation(intent.screen)
 
                 is ProductsIntent.ToggleFavorite -> handleToggleFavorite(intent.productId)
+
+                is ProductsIntent.SetDeliveryAddress -> handleSetDeliveryAddress(intent.address)
+
+                is ProductsIntent.SetPaymentMethod -> handleSetPaymentMethod(intent.paymentMethod)
+
+                ProductsIntent.ConfirmOrder -> handleConfirmOrder()
+
+                is ProductsIntent.UpdateOrderStatus -> handleUpdateOrderStatus(
+                    intent.orderId,
+                    intent.status
+                )
+
+                is ProductsIntent.RateProduct -> handleRateProduct(
+                    intent.orderId,
+                    intent.productId,
+                    intent.rating,
+                    intent.comment
+                )
             }
         } catch (_: IllegalStateException) {
             // Invalid transition blocked by state machine
@@ -124,13 +171,48 @@ class ProductsStore(
      */
     private fun dispatchMutation(mutation: ProductsMutation) {
         _state.update { currentState ->
-            ProductsReducer.reduce(
+            val newState = ProductsReducer.reduce(
                 state = currentState,
                 mutation = mutation
             )
+            scope.launch {
+                persistState(newState, mutation)
+            }
+            newState
         }
 
         stateMachine.applyMutation(mutation = mutation)
+    }
+
+    private suspend fun persistState(state: ProductsState, mutation: ProductsMutation) {
+        // Only persist relevant mutations to avoid excessive writes
+        when (mutation) {
+            is ProductsMutation.OrderCreated,
+            is ProductsMutation.OrderUpdated -> {
+                state.orders.forEach { order ->
+                    orderRepository.saveOrder(order)
+                }
+            }
+
+            is ProductsMutation.FavoriteToggled -> {
+                orderRepository.saveFavorites(state.favoriteProductIds)
+            }
+
+            is ProductsMutation.DeliveryAddressSet -> {
+                state.currentDeliveryAddress?.let {
+                    orderRepository.saveDeliveryAddress(it)
+                }
+            }
+
+            is ProductsMutation.PaymentMethodSet -> {
+                state.currentPaymentMethod?.let {
+                    orderRepository.savePaymentMethod(it)
+                }
+            }
+
+            else -> { /* No persistence needed for other mutations */
+            }
+        }
     }
 
     private fun emitEffect(effect: ProductsEffect) {
@@ -206,5 +288,95 @@ class ProductsStore(
 
         dispatchMutation(mutation = ProductsMutation.FavoriteToggled(productId = productId))
         emitEffect(effect = ProductsEffect.ShowFavoriteToggled(isAdded = isAdded))
+    }
+
+    private fun handleSetDeliveryAddress(address: DeliveryAddress) {
+        dispatchMutation(mutation = ProductsMutation.DeliveryAddressSet(address = address))
+    }
+
+    private fun handleSetPaymentMethod(paymentMethod: PaymentMethod) {
+        dispatchMutation(mutation = ProductsMutation.PaymentMethodSet(paymentMethod = paymentMethod))
+    }
+
+    private fun handleConfirmOrder() {
+        val currentState = _state.value
+        val address = currentState.currentDeliveryAddress
+        val payment = currentState.currentPaymentMethod
+        val items = currentState.basketItems
+
+        if (address == null || payment == null || items.isEmpty()) {
+            emitEffect(effect = ProductsEffect.ShowError(message = "Missing order information"))
+            return
+        }
+
+        val nowMillis = currentTimeMillis()
+        val order = Order(
+            id = "ORDER-$nowMillis",
+            items = items,
+            totalAmount = currentState.totalRetailPrice,
+            status = OrderStatus.PAYMENT_PROCESSING,
+            deliveryAddress = address,
+            paymentMethod = payment,
+            createdAt = nowMillis,
+            estimatedDeliveryTime = nowMillis + (30 * 60 * 1000) // 30 minutes
+        )
+
+        dispatchMutation(mutation = ProductsMutation.OrderCreated(order = order))
+
+        emitEffect(ProductsEffect.OrderCreated(order.id))
+
+        // Start delivery simulation
+        scope.launch {
+            simulateOrderDelivery(order.id)
+        }
+    }
+
+    private suspend fun simulateOrderDelivery(orderId: String) {
+        val statuses = listOf(
+            OrderStatus.PAYMENT_CONFIRMED to 2000L,
+            OrderStatus.PREPARING to 5000L,
+            OrderStatus.OUT_FOR_DELIVERY to 8000L,
+            OrderStatus.DELIVERED to 10000L
+        )
+
+        for ((status, delay) in statuses) {
+            kotlinx.coroutines.delay(delay)
+            handleUpdateOrderStatus(orderId, status)
+        }
+    }
+
+    private fun handleUpdateOrderStatus(orderId: String, status: OrderStatus) {
+        val currentOrder = _state.value.orders.find { it.id == orderId } ?: return
+
+        val updatedOrder = currentOrder.copy(
+            status = status,
+            actualDeliveryTime = if (status == OrderStatus.DELIVERED) {
+                currentTimeMillis()
+            } else {
+                currentOrder.actualDeliveryTime
+            }
+        )
+
+        dispatchMutation(mutation = ProductsMutation.OrderUpdated(order = updatedOrder))
+
+        if (status == OrderStatus.DELIVERED) {
+            emitEffect(effect = ProductsEffect.OrderDelivered(orderId = orderId))
+        }
+    }
+
+    private fun handleRateProduct(orderId: String, productId: Long, rating: Int, comment: String) {
+        val currentOrder = _state.value.orders.find { it.id == orderId } ?: return
+
+        val productRating = ProductRating(
+            productId = productId,
+            rating = rating,
+            comment = comment,
+            createdAt = currentTimeMillis()
+        )
+
+        val updatedRatings = currentOrder.ratings + (productId to productRating)
+        val updatedOrder = currentOrder.copy(ratings = updatedRatings)
+
+        dispatchMutation(mutation = ProductsMutation.OrderUpdated(order = updatedOrder))
     }
 }

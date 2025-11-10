@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import lt.vitalijus.cmp_custom_pagination.data.persistence.OrderRepository
 import lt.vitalijus.cmp_custom_pagination.domain.paging.ProductPagingFactory
 import lt.vitalijus.cmp_custom_pagination.domain.usecase.basket.AddToBasketUseCase
 import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsEffect
@@ -19,13 +20,15 @@ import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsStor
 class ProductsViewModel(
     pagerFactory: ProductPagingFactory,
     addToBasketUseCase: AddToBasketUseCase,
-    stateMachine: ProductsStateMachine
+    stateMachine: ProductsStateMachine,
+    orderRepository: OrderRepository
 ) : ViewModel() {
 
     private val store = ProductsStore(
         pagerFactory = pagerFactory,
         addToBasketUseCase = addToBasketUseCase,
         stateMachine = stateMachine,
+        orderRepository = orderRepository,
         scope = viewModelScope
     )
 

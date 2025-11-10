@@ -40,6 +40,11 @@ import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component.App
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component.NavigationBottomBar
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.basket.BasketScreen
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.details.ProductDetailsScreen
+import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.order.DeliveryScreen
+import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.order.OrderRatingScreen
+import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.order.OrderTrackingScreen
+import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.order.OrdersHistoryScreen
+import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.order.PaymentScreen
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.products.ProductListScreen
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.settings.FavoritesScreen
 import org.koin.core.component.inject
@@ -86,6 +91,14 @@ fun RootScreen() {
                 is ProductsEffect.NavigateBack -> {
                     navController.popBackStack()
                 }
+
+                is ProductsEffect.OrderCreated -> {
+                    navController.navigate(Screen.OrderTracking(effect.orderId))
+                }
+
+                is ProductsEffect.OrderDelivered -> {
+                    snackbarHostState.showSnackbar("Your order has been delivered!")
+                }
             }
         }
     }
@@ -97,10 +110,18 @@ fun RootScreen() {
         topBar = {
             val currentRoute = currentEntry?.destination?.route
             val title = screenTitleProvider.getTitleForRoute(currentRoute)
-            val isOnDetailsScreen = currentRoute?.contains("ProductDetails") == true
-            val isOnBasketScreen = currentRoute?.contains("Basket") == true
-            val showBackButton =
-                isOnDetailsScreen || (isOnBasketScreen && navController.previousBackStackEntry != null)
+            val showBackButton = when {
+                currentRoute?.contains("ProductList") == true -> false
+                currentRoute?.contains("Basket") == true && navController.previousBackStackEntry != null -> true
+                currentRoute?.contains("ProductDetails") == true -> true
+                currentRoute?.contains("Favorites") == true -> false
+                currentRoute?.contains("Orders") == true && navController.previousBackStackEntry != null -> true
+                currentRoute?.contains("Delivery") == true -> true
+                currentRoute?.contains("Payment") == true -> true
+                currentRoute?.contains("OrderTracking") == true -> true
+                currentRoute?.contains("OrderRating") == true -> true
+                else -> false
+            }
 
             TopAppBar(
                 title = {
@@ -130,19 +151,34 @@ fun RootScreen() {
             val currentRoute = currentEntry?.destination?.route
             val currentScreen = when {
                 currentRoute?.contains("ProductList") == true -> Screen.ProductList
+                currentRoute?.contains("ProductDetails") == true -> null // Don't show bottom bar selection for details
                 currentRoute?.contains("Basket") == true -> Screen.Basket
                 currentRoute?.contains("Favorites") == true -> Screen.Favorites
+                currentRoute?.contains("Orders") == true -> Screen.Orders
+                currentRoute?.contains("Delivery") == true -> Screen.Orders
+                currentRoute?.contains("Payment") == true -> Screen.Orders
+                currentRoute?.contains("OrderTracking") == true -> Screen.Orders
+                currentRoute?.contains("OrderRating") == true -> Screen.Orders
                 else -> Screen.ProductList
             }
 
             NavigationBottomBar(
                 onNavigateToScreen = { screen ->
-                    viewModel.processIntent(ProductsIntent.NavigateTo(screen))
+                    if (screen == Screen.Basket) {
+                        // Always pop to root then navigate, to fix Basket as fully focused
+                        while (navController.previousBackStackEntry != null && navController.currentDestination?.route != null && navController.currentDestination?.route != Screen.Basket.route) {
+                            navController.popBackStack()
+                        }
+                        navController.navigate(Screen.Basket)
+                    } else {
+                        viewModel.processIntent(ProductsIntent.NavigateTo(screen))
+                    }
                 },
                 currentScreen = currentScreen,
                 basketNotEmpty = !state.isBasketEmpty,
                 basketQuantity = state.totalQuantity,
-                favoritesCount = state.favoriteProductIds.size
+                favoritesCount = state.favoriteProductIds.size,
+                ordersCount = state.orders.size
             )
         }
     ) { contentPadding ->
@@ -228,6 +264,70 @@ private fun AppNavHost(
                     }
                 )
             }
+        }
+
+        composable<Screen.Orders> {
+            OrdersHistoryScreen(
+                orders = state.orders,
+                onOrderClick = { orderId ->
+                    navController.navigate(Screen.OrderTracking(orderId))
+                }
+            )
+        }
+
+        composable<Screen.Delivery> {
+            DeliveryScreen(
+                onProceedToPayment = { address ->
+                    onIntent(ProductsIntent.SetDeliveryAddress(address))
+                    navController.navigate(Screen.Payment)
+                }
+            )
+        }
+
+        composable<Screen.Payment> {
+            PaymentScreen(
+                totalAmount = state.totalRetailPrice,
+                onConfirmPayment = { paymentMethod ->
+                    onIntent(ProductsIntent.SetPaymentMethod(paymentMethod))
+                    onIntent(ProductsIntent.ConfirmOrder)
+                }
+            )
+        }
+
+        composable<Screen.OrderTracking> { backStackEntry ->
+            val orderTrackingRoute = backStackEntry.toRoute<Screen.OrderTracking>()
+            val order = state.orders.find { it.id == orderTrackingRoute.orderId }
+
+            OrderTrackingScreen(
+                order = order,
+                onNavigateToRating = {
+                    order?.let {
+                        navController.navigate(Screen.OrderRating(it.id))
+                    }
+                }
+            )
+        }
+
+        composable<Screen.OrderRating> { backStackEntry ->
+            val orderRatingRoute = backStackEntry.toRoute<Screen.OrderRating>()
+            val order = state.orders.find { it.id == orderRatingRoute.orderId }
+
+            OrderRatingScreen(
+                order = order,
+                onSubmitRatings = { ratingsMap ->
+                    ratingsMap.forEach { (productId, ratingAndComment) ->
+                        onIntent(
+                            ProductsIntent.RateProduct(
+                                orderId = orderRatingRoute.orderId,
+                                productId = productId,
+                                rating = ratingAndComment.first,
+                                comment = ratingAndComment.second
+                            )
+                        )
+                    }
+                    navController.popBackStack()
+                }
+            )
         }
     }
 }

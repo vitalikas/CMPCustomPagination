@@ -8,6 +8,11 @@ class DefaultScreenTitleProvider : ScreenTitleProvider {
             route?.contains("Basket") == true -> "Shopping Basket"
             route?.contains("Favorites") == true -> "Favorites"
             route?.contains("ProductDetails") == true -> "Product Details"
+            route?.contains("Orders") == true -> "My Orders"
+            route?.contains("Delivery") == true -> "Delivery Information"
+            route?.contains("Payment") == true -> "Payment"
+            route?.contains("OrderTracking") == true -> "Order Tracking"
+            route?.contains("OrderRating") == true -> "Rate Products"
             else -> "Unknown route"
         }
     }

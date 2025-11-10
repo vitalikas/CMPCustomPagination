@@ -1,6 +1,9 @@
 package lt.vitalijus.cmp_custom_pagination.presentation.products.mvi
 
 import lt.vitalijus.cmp_custom_pagination.domain.model.BasketItem
+import lt.vitalijus.cmp_custom_pagination.domain.model.DeliveryAddress
+import lt.vitalijus.cmp_custom_pagination.domain.model.Order
+import lt.vitalijus.cmp_custom_pagination.domain.model.PaymentMethod
 import lt.vitalijus.cmp_custom_pagination.domain.model.Product
 
 /**
@@ -11,7 +14,11 @@ data class ProductsState(
     val basketItems: List<BasketItem> = emptyList(),
     val favoriteProductIds: Set<Long> = emptySet(),
     val isLoadingMore: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val currentDeliveryAddress: DeliveryAddress? = null,
+    val currentPaymentMethod: PaymentMethod? = null,
+    val currentOrder: Order? = null,
+    val orders: List<Order> = emptyList()
 ) {
     // Computed properties (derived state)
     val totalQuantity: Int

@@ -1,5 +1,8 @@
 package lt.vitalijus.cmp_custom_pagination.domain.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class Product(
     val id: Long,
     val title: String,
@@ -30,12 +33,14 @@ data class Product(
         get() = price
 }
 
+@Serializable
 data class Dimensions(
     val width: Double? = null,
     val height: Double? = null,
     val depth: Double? = null
 )
 
+@Serializable
 data class Review(
     val rating: Int,
     val comment: String,
@@ -44,6 +49,7 @@ data class Review(
     val reviewerEmail: String
 )
 
+@Serializable
 data class ProductItem(
     val products: List<Product>,
     val total: Long,

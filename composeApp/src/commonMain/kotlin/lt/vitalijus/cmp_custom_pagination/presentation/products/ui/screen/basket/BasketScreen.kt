@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -28,7 +29,12 @@ import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsInte
 import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsState
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component.AppIcons
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component.BasketItemCard
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.shrinkHorizontally
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BasketScreen(
     state: ProductsState,
@@ -42,16 +48,25 @@ fun BasketScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Icon(
                         imageVector = AppIcons.ShoppingCart,
                         contentDescription = "Empty basket",
                         modifier = Modifier.size(64.dp)
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Your basket is empty",
-                        style = MaterialTheme.typography.titleMedium
+                        text = "Your Basket is Empty",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Add products to your basket to continue shopping",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
                 }
             }
@@ -63,24 +78,31 @@ fun BasketScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(state.basketItems) { basketItem ->
-                    BasketItemCard(
-                        basketItem = basketItem,
-                        onUpdateQuantity = { newQuantity ->
-                            onIntent(
-                                ProductsIntent.UpdateQuantity(
-                                    productId = basketItem.product.id,
-                                    newQuantity = newQuantity
+                items(state.basketItems, key = { it.product.id }) { basketItem ->
+                    AnimatedVisibility(
+                        visible = state.basketItems.any { it.product.id == basketItem.product.id },
+                        enter = fadeIn(),
+                        exit = fadeOut() + shrinkHorizontally(),
+                        modifier = Modifier
+                    ) {
+                        BasketItemCard(
+                            basketItem = basketItem,
+                            onUpdateQuantity = { newQuantity ->
+                                onIntent(
+                                    ProductsIntent.UpdateQuantity(
+                                        productId = basketItem.product.id,
+                                        newQuantity = newQuantity
+                                    )
                                 )
-                            )
-                        },
-                        onRemove = {
-                            onIntent(ProductsIntent.RemoveProduct(basketItem.product.id))
-                        },
-                        onItemClick = {
-                            onProductClick(basketItem.product.id)
-                        }
-                    )
+                            },
+                            onRemove = {
+                                onIntent(ProductsIntent.RemoveProduct(basketItem.product.id))
+                            },
+                            onItemClick = {
+                                onProductClick(basketItem.product.id)
+                            }
+                        )
+                    }
                 }
             }
 
@@ -119,7 +141,7 @@ fun BasketScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
-                    onClick = { /* Checkout */ },
+                    onClick = { onIntent(ProductsIntent.NavigateTo(lt.vitalijus.cmp_custom_pagination.presentation.products.Screen.Delivery)) },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Proceed to Checkout")

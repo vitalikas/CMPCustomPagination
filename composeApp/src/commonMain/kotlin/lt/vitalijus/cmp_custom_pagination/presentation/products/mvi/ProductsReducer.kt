@@ -53,6 +53,48 @@ object ProductsReducer {
                     favoriteProductIds = updatedFavorites
                 )
             }
+
+            is ProductsMutation.DeliveryAddressSet -> {
+                state.copy(
+                    currentDeliveryAddress = mutation.address
+                )
+            }
+
+            is ProductsMutation.PaymentMethodSet -> {
+                state.copy(
+                    currentPaymentMethod = mutation.paymentMethod
+                )
+            }
+
+            is ProductsMutation.OrderCreated -> {
+                state.copy(
+                    currentOrder = mutation.order,
+                    orders = state.orders + mutation.order,
+                    basketItems = emptyList() // Clear basket after order creation
+                )
+            }
+
+            is ProductsMutation.OrderUpdated -> {
+                val updatedOrders = state.orders.map { order ->
+                    if (order.id == mutation.order.id) mutation.order else order
+                }
+                state.copy(
+                    currentOrder = if (state.currentOrder?.id == mutation.order.id) {
+                        mutation.order
+                    } else {
+                        state.currentOrder
+                    },
+                    orders = updatedOrders
+                )
+            }
+
+            is ProductsMutation.ProductRated -> {
+                state.copy(
+                    currentOrder = state.currentOrder?.let { order ->
+                        if (order.id == mutation.orderId) order else order
+                    }
+                )
+            }
         }
     }
 }

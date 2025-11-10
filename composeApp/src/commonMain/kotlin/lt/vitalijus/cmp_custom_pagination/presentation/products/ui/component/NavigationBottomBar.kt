@@ -14,12 +14,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import lt.vitalijus.cmp_custom_pagination.presentation.products.Screen
-import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component.AppIcons
 
 @Composable
 fun NavigationBottomBar(
@@ -27,9 +25,10 @@ fun NavigationBottomBar(
     currentScreen: Screen?,
     basketNotEmpty: Boolean,
     basketQuantity: Int,
-    favoritesCount: Int = 0
+    favoritesCount: Int = 0,
+    ordersCount: Int = 0
 ) {
-    val screens = listOf(Screen.ProductList, Screen.Basket, Screen.Favorites)
+    val screens = listOf(Screen.ProductList, Screen.Basket, Screen.Favorites, Screen.Orders)
 
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.secondaryContainer
@@ -41,6 +40,7 @@ fun NavigationBottomBar(
                 Screen.ProductList -> AppIcons.GridView
                 Screen.Basket -> AppIcons.ShoppingCart
                 Screen.Favorites -> AppIcons.FavoriteBorder
+                Screen.Orders -> AppIcons.ShoppingCart
                 else -> AppIcons.GridView
             }
 
@@ -69,7 +69,8 @@ fun NavigationBottomBar(
                         ) {
                             Icon(
                                 imageVector = iconVector,
-                                contentDescription = screen.route
+                                contentDescription = screen.route,
+                                tint = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -94,17 +95,24 @@ fun NavigationBottomBar(
                         ) {
                             Icon(
                                 imageVector = iconVector,
-                                contentDescription = screen.route
+                                contentDescription = screen.route,
+                                tint = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     } else {
                         Icon(
                             imageVector = iconVector,
-                            contentDescription = screen.route
+                            contentDescription = screen.route,
+                            tint = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 },
-                label = { Text(text = screen.route) },
+                label = {
+                    Text(
+                        text = screen.route,
+                        color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = Color.White,
                     selectedTextColor = Color.White,

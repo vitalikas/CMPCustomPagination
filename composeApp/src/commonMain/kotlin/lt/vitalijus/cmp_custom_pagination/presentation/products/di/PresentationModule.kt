@@ -39,7 +39,8 @@ val presentationModule = module {
         ProductsViewModel(
             pagerFactory = get(),
             addToBasketUseCase = get(),
-            stateMachine = get()
+            stateMachine = get(),
+            orderRepository = get()
         )
     }
 }

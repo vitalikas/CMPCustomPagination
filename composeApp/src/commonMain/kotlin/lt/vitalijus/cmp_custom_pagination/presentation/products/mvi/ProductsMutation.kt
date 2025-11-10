@@ -1,6 +1,9 @@
 package lt.vitalijus.cmp_custom_pagination.presentation.products.mvi
 
 import lt.vitalijus.cmp_custom_pagination.domain.model.BasketItem
+import lt.vitalijus.cmp_custom_pagination.domain.model.DeliveryAddress
+import lt.vitalijus.cmp_custom_pagination.domain.model.Order
+import lt.vitalijus.cmp_custom_pagination.domain.model.PaymentMethod
 import lt.vitalijus.cmp_custom_pagination.domain.model.Product
 import kotlin.jvm.JvmInline
 
@@ -37,5 +40,31 @@ sealed interface ProductsMutation {
     @JvmInline
     value class FavoriteToggled(
         val productId: Long
+    ) : ProductsMutation
+
+    // Order flow mutations
+    @JvmInline
+    value class DeliveryAddressSet(
+        val address: DeliveryAddress
+    ) : ProductsMutation
+
+    @JvmInline
+    value class PaymentMethodSet(
+        val paymentMethod: PaymentMethod
+    ) : ProductsMutation
+
+    @JvmInline
+    value class OrderCreated(
+        val order: Order
+    ) : ProductsMutation
+
+    @JvmInline
+    value class OrderUpdated(
+        val order: Order
+    ) : ProductsMutation
+
+    @JvmInline
+    value class ProductRated(
+        val orderId: String
     ) : ProductsMutation
 }

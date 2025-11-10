@@ -1,5 +1,8 @@
 package lt.vitalijus.cmp_custom_pagination.data.di
 
+import lt.vitalijus.cmp_custom_pagination.data.persistence.LocalOrderRepository
+import lt.vitalijus.cmp_custom_pagination.data.persistence.OrderRepository
+import lt.vitalijus.cmp_custom_pagination.data.persistence.createKeyValueStorage
 import lt.vitalijus.cmp_custom_pagination.data.repository.impl.InMemoryProductRepository
 import lt.vitalijus.cmp_custom_pagination.data.repository.impl.OffsetBasedProductRepository
 import lt.vitalijus.cmp_custom_pagination.data.source.local.InMemoryProductDataSource
@@ -16,4 +19,8 @@ val dataModule = module {
     single<CursorProductReader> { InMemoryProductRepository(get()) }
 
     single<OffsetBasedProductReader> { OffsetBasedProductRepository(get()) }
+
+    // Persistence
+    single { createKeyValueStorage() }
+    single<OrderRepository> { LocalOrderRepository(get()) }
 }
