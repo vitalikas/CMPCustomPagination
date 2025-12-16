@@ -48,11 +48,32 @@ fun ProductsScreen(
     onIntent: (ProductsIntent) -> Unit,
     onProductClick: (Long) -> Unit = {},
     onFavoriteClick: (Long) -> Unit = {},
+    selectedProductId: Long? = null,
     modifier: Modifier = Modifier
 ) {
     var layoutMode by remember { mutableStateOf(LayoutMode.GRID) }
     val lazyGridState = rememberLazyGridState()
     val lazyListState = rememberLazyListState()
+
+    // Synchronize scroll position when switching layouts
+    LaunchedEffect(layoutMode) {
+        when (layoutMode) {
+            LayoutMode.GRID -> {
+                // When switching to grid, scroll to the first visible item from list
+                val listFirstVisibleIndex = lazyListState.firstVisibleItemIndex
+                if (listFirstVisibleIndex > 0) {
+                    lazyGridState.scrollToItem(listFirstVisibleIndex)
+                }
+            }
+            LayoutMode.LIST -> {
+                // When switching to list, scroll to the first visible item from grid
+                val gridFirstVisibleIndex = lazyGridState.firstVisibleItemIndex
+                if (gridFirstVisibleIndex > 0) {
+                    lazyListState.scrollToItem(gridFirstVisibleIndex)
+                }
+            }
+        }
+    }
 
     Column(
         modifier = modifier
@@ -161,6 +182,7 @@ fun ProductsScreen(
                         ProductCard(
                             product = product,
                             isFavorite = state.favoriteProductIds.contains(product.id),
+                            isSelected = selectedProductId == product.id,
                             onProductClick = onProductClick,
                             onFavoriteClick = onFavoriteClick
                         )
@@ -194,6 +216,7 @@ fun ProductsScreen(
                         ProductCardHorizontal(
                             product = product,
                             isFavorite = state.favoriteProductIds.contains(product.id),
+                            isSelected = selectedProductId == product.id,
                             onProductClick = onProductClick,
                             onFavoriteClick = onFavoriteClick
                         )

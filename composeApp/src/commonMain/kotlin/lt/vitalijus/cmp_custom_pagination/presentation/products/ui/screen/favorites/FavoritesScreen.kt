@@ -31,6 +31,7 @@ fun FavoritesScreen(
     state: ProductsState,
     onProductClick: (Long) -> Unit = {},
     onFavoriteClick: (Long) -> Unit = {},
+    selectedProductId: Long? = null,
     onIntent: (ProductsIntent) -> Unit = {}
 ) {
     // Always load fresh data from network when entering favorites screen
@@ -109,6 +110,7 @@ fun FavoritesScreen(
                         ProductCard(
                             product = product,
                             isFavorite = true,
+                            isSelected = selectedProductId == product.id,
                             onProductClick = onProductClick,
                             onFavoriteClick = onFavoriteClick
                         )

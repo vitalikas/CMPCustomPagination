@@ -28,7 +28,8 @@ fun BottomNavigationBar(
     favoritesItemCount: Int = 0
 ) {
     BottomAppBar(
-        modifier = modifier
+        modifier = modifier,
+        containerColor = Color(0xFFC8E6C9) // Light green that matches the color palette
     ) {
         TOP_LEVEL_DESTINATIONS.forEach { (routeKey, navItem) ->
             val title = stringResource(navItem.titleRes)

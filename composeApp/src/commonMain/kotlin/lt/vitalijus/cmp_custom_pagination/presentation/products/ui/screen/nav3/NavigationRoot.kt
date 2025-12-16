@@ -14,6 +14,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
@@ -79,6 +81,13 @@ fun NavigationRoot(
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     val isWideScreen = windowSizeClass.isWidthAtLeastBreakpoint(WIDTH_DP_MEDIUM_LOWER_BOUND)
 
+    // Determine the selected product ID for highlighting in the list
+    val selectedProductId = if (isWideScreen && currentRoute is Route.ProductDetail) {
+        currentRoute.productId
+    } else {
+        null
+    }
+
     // Auto-navigate to first product on wide screens for list-detail scene
     LaunchedEffect(
         isWideScreen,
@@ -108,6 +117,32 @@ fun NavigationRoot(
                 if (state.favoriteProductsData.isNotEmpty()) {
                     val firstFavoriteProductId = state.favoriteProductsData.first().id
                     navigator.navigate(Route.ProductDetail(productId = firstFavoriteProductId))
+                }
+            }
+        }
+    }
+
+    // Handle favorite removal when viewing detail in Favorites scene
+    LaunchedEffect(isWideScreen, topLevelRoute, currentRoute, state.favoriteProductIds, state.favoriteProductsData) {
+        // Only handle this when scene is active (wide screen + Favorites + viewing a detail)
+        if (isWideScreen && 
+            topLevelRoute == Route.Favorites && 
+            currentRoute is Route.ProductDetail) {
+            
+            val currentProductId = currentRoute.productId
+            
+            // Check if the currently displayed product is no longer a favorite
+            if (!state.favoriteProductIds.contains(currentProductId)) {
+                // Product was removed from favorites, navigate to another favorite
+                if (state.favoriteProductsData.isNotEmpty()) {
+                    // Find a different favorite to show (prefer the next one, or the first one)
+                    val nextFavorite = state.favoriteProductsData.firstOrNull { it.id != currentProductId }
+                    nextFavorite?.let { product ->
+                        navigator.navigate(Route.ProductDetail(productId = product.id))
+                    }
+                } else {
+                    // No more favorites, go back to Favorites list
+                    navigator.goBack()
                 }
             }
         }
@@ -205,7 +240,10 @@ fun NavigationRoot(
                             style = MaterialTheme.typography.titleLarge
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFFC8E6C9) // Light green matching bottom nav bar
+                )
             )
         },
         bottomBar = {
@@ -249,7 +287,8 @@ fun NavigationRoot(
                             },
                             onFavoriteClick = { productId ->
                                 viewModel.processIntent(ProductsIntent.ToggleFavorite(productId))
-                            }
+                            },
+                            selectedProductId = selectedProductId
                         )
                     }
                     entry<Route.ProductDetail>(
@@ -315,6 +354,7 @@ fun NavigationRoot(
                                     )
                                 )
                             },
+                            selectedProductId = selectedProductId,
                             onIntent = viewModel::processIntent
                         )
                     }

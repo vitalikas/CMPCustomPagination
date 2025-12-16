@@ -36,6 +36,7 @@ import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component.App
 fun ProductCard(
     product: Product,
     isFavorite: Boolean = false,
+    isSelected: Boolean = false,
     onProductClick: (Long) -> Unit = {},
     onFavoriteClick: (Long) -> Unit = {}
 ) {
@@ -43,7 +44,11 @@ fun ProductCard(
         modifier = Modifier.fillMaxWidth(),
         onClick = { onProductClick(product.id) },
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = if (isSelected) {
+                Color(0xFFE8F5E9) // Light green for selected item
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            }
         ),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -72,7 +77,7 @@ fun ProductCard(
                         .padding(8.dp),
                     shape = CircleShape,
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
+                        containerColor = Color.Transparent
                     )
                 ) {
                     IconButton(
@@ -127,6 +132,7 @@ fun ProductCard(
 fun ProductCardHorizontal(
     product: Product,
     isFavorite: Boolean = false,
+    isSelected: Boolean = false,
     onProductClick: (Long) -> Unit = {},
     onFavoriteClick: (Long) -> Unit = {}
 ) {
@@ -136,7 +142,11 @@ fun ProductCardHorizontal(
             .height(120.dp),
         onClick = { onProductClick(product.id) },
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = if (isSelected) {
+                Color(0xFFE8F5E9) // Light green for selected item
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            }
         ),
         shape = RoundedCornerShape(12.dp)
     ) {
