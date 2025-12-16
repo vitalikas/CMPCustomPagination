@@ -19,6 +19,7 @@ class ProductsStateMachine(
         return when (currentState) {
             is ProductsTransitionState.Idle -> when (intent) {
                 ProductsIntent.LoadMore -> ProductsTransitionState.LoadingProducts
+                is ProductsIntent.LoadFavorites -> ProductsTransitionState.LoadingProducts
                 is ProductsIntent.NavigateTo -> ProductsTransitionState.Idle
                 is ProductsIntent.ToggleFavorite -> ProductsTransitionState.Idle
                 else -> throw IllegalStateException("Invalid transition from Idle: $intent")
@@ -34,6 +35,7 @@ class ProductsStateMachine(
 
             is ProductsTransitionState.Ready -> when (intent) {
                 ProductsIntent.LoadMore -> ProductsTransitionState.LoadingProducts
+                is ProductsIntent.LoadFavorites -> ProductsTransitionState.LoadingProducts
                 is ProductsIntent.AddToBasket -> ProductsTransitionState.ProcessingBasket
                 is ProductsIntent.UpdateQuantity -> ProductsTransitionState.ProcessingBasket
                 is ProductsIntent.RemoveProduct -> ProductsTransitionState.ProcessingBasket
@@ -49,6 +51,7 @@ class ProductsStateMachine(
 
             is ProductsTransitionState.Error -> when (intent) {
                 ProductsIntent.LoadMore -> ProductsTransitionState.LoadingProducts
+                is ProductsIntent.LoadFavorites -> ProductsTransitionState.LoadingProducts
                 is ProductsIntent.NavigateTo -> currentState
                 is ProductsIntent.ToggleFavorite -> currentState
                 else -> throw IllegalStateException("Invalid transition from Error: $intent")
@@ -80,6 +83,15 @@ class ProductsStateMachine(
             is ProductsMutation.BasketUpdated -> ProductsTransitionState.Ready
 
             is ProductsMutation.FavoriteToggled -> currentState
+
+            is ProductsMutation.SetLoadingFavorites ->
+                if (mutation.isLoading) {
+                    ProductsTransitionState.LoadingProducts
+                } else {
+                    ProductsTransitionState.Ready
+                }
+
+            is ProductsMutation.FavoritesLoaded -> ProductsTransitionState.Ready
 
             is ProductsMutation.DeliveryAddressSet -> currentState
 

@@ -66,7 +66,7 @@ class BrowseProductsScreenTest {
 
         // When
         composeTestRule.setContent {
-            ProductListScreen(
+            ProductsScreen(
                 state = state,
                 onIntent = {},
                 lazyListState = rememberLazyListState()
@@ -87,7 +87,7 @@ class BrowseProductsScreenTest {
 
         // When
         composeTestRule.setContent {
-            ProductListScreen(
+            ProductsScreen(
                 state = state,
                 onIntent = {},
                 lazyListState = rememberLazyListState()
@@ -112,7 +112,7 @@ class BrowseProductsScreenTest {
 
         // When
         composeTestRule.setContent {
-            ProductListScreen(
+            ProductsScreen(
                 state = state,
                 onIntent = {},
                 lazyListState = rememberLazyListState()
@@ -134,7 +134,7 @@ class BrowseProductsScreenTest {
 
         // When
         composeTestRule.setContent {
-            ProductListScreen(
+            ProductsScreen(
                 state = state,
                 onIntent = {
                     intents.add(it)
@@ -165,7 +165,7 @@ class BrowseProductsScreenTest {
 
         // When
         composeTestRule.setContent {
-            ProductListScreen(
+            ProductsScreen(
                 state = state,
                 onIntent = { intents.add(it) },
                 lazyListState = rememberLazyListState()
@@ -212,7 +212,7 @@ class BrowseProductsScreenTest {
 
         // When
         composeTestRule.setContent {
-            ProductListScreen(
+            ProductsScreen(
                 state = state,
                 onIntent = {},
                 lazyListState = rememberLazyListState()
@@ -233,7 +233,7 @@ class BrowseProductsScreenTest {
 
         // When
         composeTestRule.setContent {
-            ProductListScreen(
+            ProductsScreen(
                 state = state,
                 onIntent = {},
                 lazyListState = rememberLazyListState()
@@ -258,7 +258,7 @@ class BrowseProductsScreenTest {
 
         // When
         composeTestRule.setContent {
-            ProductListScreen(
+            ProductsScreen(
                 state = stateHolder.value,
                 onIntent = { intents.add(it) },
                 lazyListState = listState
@@ -292,7 +292,7 @@ class BrowseProductsScreenTest {
 
         // When
         composeTestRule.setContent {
-            ProductListScreen(
+            ProductsScreen(
                 state = state,
                 onIntent = {},
                 lazyListState = rememberLazyListState()
@@ -317,7 +317,7 @@ class BrowseProductsScreenTest {
 
         // When
         composeTestRule.setContent {
-            ProductListScreen(
+            ProductsScreen(
                 state = state,
                 onIntent = { intents.add(it) },
                 lazyListState = rememberLazyListState()
@@ -350,7 +350,7 @@ class BrowseProductsScreenTest {
 
         // When
         composeTestRule.setContent {
-            ProductListScreen(
+            ProductsScreen(
                 state = state,
                 onIntent = {},
                 lazyListState = rememberLazyListState()
@@ -374,7 +374,7 @@ class BrowseProductsScreenTest {
 
         // When
         composeTestRule.setContent {
-            ProductListScreen(
+            ProductsScreen(
                 state = state,
                 onIntent = { intents.add(it) },
                 lazyListState = rememberLazyListState()
@@ -414,7 +414,7 @@ class BrowseProductsScreenTest {
 
         // When
         composeTestRule.setContent {
-            ProductListScreen(
+            ProductsScreen(
                 state = stateHolder.value,
                 onIntent = { intents.add(it) },
                 lazyListState = listState
@@ -477,7 +477,7 @@ class BrowseProductsScreenTest {
 
         // When
         composeTestRule.setContent {
-            ProductListScreen(
+            ProductsScreen(
                 state = state,
                 onIntent = {},
                 lazyListState = rememberLazyListState()
@@ -513,7 +513,7 @@ class BrowseProductsScreenTest {
 
         // When
         composeTestRule.setContent {
-            ProductListScreen(
+            ProductsScreen(
                 state = state,
                 onIntent = {},
                 lazyListState = rememberLazyListState()

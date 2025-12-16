@@ -23,13 +23,13 @@ val presentationModule = module {
     }
 
     // Offset-based pagination (uses ProductRepository interface)
-    single<PagingStrategy> { OffsetBasedPagingStrategy(repository = get()) }
+    single<PagingStrategy>(createdAtStart = true) { OffsetBasedPagingStrategy(repository = get()) }
 
     // Cursor-based pagination (uses CursorProductReader interface)  
 //    single<PagingStrategy> { CursorBasedPagingStrategy(cursorReader = get()) }
 
     // Factory for creating ProductPager instances
-    single { ProductPagingFactory(get()) }
+    single(createdAtStart = true) { ProductPagingFactory(get()) }
 
     // MVI Components
     factory { ProductsStateMachine(initialState = ProductsTransitionState.Idle) }
@@ -40,7 +40,8 @@ val presentationModule = module {
             pagerFactory = get(),
             addToBasketUseCase = get(),
             stateMachine = get(),
-            orderRepository = get()
+            orderRepository = get(),
+            favoritesRepository = get()
         )
     }
 }

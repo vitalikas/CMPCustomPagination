@@ -105,10 +105,8 @@ class LocalOrderRepository(
 
 // Platform-specific storage interface
 interface KeyValueStorage {
-    fun putString(key: String, value: String)
-    fun getString(key: String): String?
-    fun remove(key: String)
-    fun clear()
+    suspend fun putString(key: String, value: String)
+    suspend fun getString(key: String): String?
+    suspend fun remove(key: String)
+    suspend fun clear()
 }
-
-expect fun createKeyValueStorage(): KeyValueStorage

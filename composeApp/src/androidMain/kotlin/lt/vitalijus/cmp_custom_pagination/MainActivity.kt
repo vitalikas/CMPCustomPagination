@@ -4,8 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import lt.vitalijus.cmp_custom_pagination.data.persistence.initializeStorage
-import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.RootScreen
+import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.nav3.NavigationRoot
 import lt.vitalijus.cmp_custom_pagination.ui.theme.AppTheme
 
 class MainActivity : ComponentActivity() {
@@ -13,12 +12,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        // Initialize storage for persistence
-        initializeStorage(applicationContext)
-
         setContent {
             AppTheme {
-                RootScreen()
+//                RootScreen()
+                NavigationRoot()
             }
         }
     }

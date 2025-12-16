@@ -15,6 +15,17 @@ class InMemoryProductDataSource {
 
     private val dummyProducts = generateDummyProducts()
 
+    suspend fun getProductsByIds(ids: Set<Long>): Result<List<ProductDto>> {
+        delay(500) // Simulate network delay
+
+        return try {
+            val products = dummyProducts.filter { it.id in ids }
+            Result.success(products)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun getProductsAfter(
         cursor: String? = null,
         limit: Int

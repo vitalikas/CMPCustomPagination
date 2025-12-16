@@ -45,8 +45,8 @@ import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.order.
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.order.OrderTrackingScreen
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.order.OrdersHistoryScreen
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.order.PaymentScreen
-import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.products.ProductListScreen
-import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.settings.FavoritesScreen
+import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.products.ProductsScreen
+import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.favorites.FavoritesScreen
 import org.koin.core.component.inject
 
 @Composable
@@ -213,7 +213,7 @@ private fun AppNavHost(
         modifier = modifier
     ) {
         composable<Screen.ProductList> {
-            ProductListScreen(
+            ProductsScreen(
                 state = state,
                 onIntent = onIntent,
                 onProductClick = { productId ->

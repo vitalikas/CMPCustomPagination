@@ -12,6 +12,8 @@ import kotlinx.coroutines.launch
 import lt.vitalijus.cmp_custom_pagination.core.utils.currentTimeMillis
 import lt.vitalijus.cmp_custom_pagination.core.utils.pager.ProductPager
 import lt.vitalijus.cmp_custom_pagination.data.persistence.OrderRepository
+import lt.vitalijus.cmp_custom_pagination.data.repository.FavoritesRepository
+import lt.vitalijus.cmp_custom_pagination.data.source.remote.api.ProductApi
 import lt.vitalijus.cmp_custom_pagination.domain.model.Product
 import lt.vitalijus.cmp_custom_pagination.domain.model.DeliveryAddress
 import lt.vitalijus.cmp_custom_pagination.domain.model.PaymentMethod
@@ -33,6 +35,7 @@ class ProductsStore(
     private val addToBasketUseCase: AddToBasketUseCase,
     private val stateMachine: ProductsStateMachine,
     private val orderRepository: OrderRepository,
+    private val favoritesRepository: FavoritesRepository,
     private val scope: CoroutineScope
 ) {
     private val _state = MutableStateFlow(ProductsState())
@@ -125,6 +128,7 @@ class ProductsStore(
             // Execute the intent
             when (intent) {
                 ProductsIntent.LoadMore -> handleLoadMore()
+                is ProductsIntent.LoadFavorites -> handleLoadFavorites(intent.favoriteIds)
 
                 is ProductsIntent.AddToBasket -> handleAddToBasket(intent.product, intent.quantity)
 
@@ -227,6 +231,65 @@ class ProductsStore(
         }
     }
 
+    private fun handleLoadFavorites(favoriteIds: Set<Long>) {
+        scope.launch {
+            if (favoriteIds.isEmpty()) {
+                // No favorites to load
+                dispatchMutation(ProductsMutation.FavoritesLoaded(products = emptyList()))
+                return@launch
+            }
+
+            // Step 1: Show cached data immediately (instant display)
+            favoritesRepository.getCachedFavorites(favoriteIds)
+                .onSuccess { cachedProducts ->
+                    if (cachedProducts.isNotEmpty()) {
+                        // Display cached data instantly
+                        dispatchMutation(ProductsMutation.FavoritesLoaded(products = cachedProducts))
+                    }
+                }
+
+            // Step 2: Check if we need to refresh from network
+            val shouldRefresh = favoritesRepository.shouldRefresh(favoriteIds)
+
+            if (shouldRefresh) {
+                // Show loading indicator
+                dispatchMutation(ProductsMutation.SetLoadingFavorites(isLoading = true))
+
+                try {
+                    // Fetch fresh data from network and update cache
+                    favoritesRepository.refreshFavorites(favoriteIds)
+                        .onSuccess { freshProducts ->
+                            // Update UI with fresh data
+                            dispatchMutation(ProductsMutation.FavoritesLoaded(products = freshProducts))
+                        }
+                        .onFailure { error ->
+                            // Only show error if we don't have cached data
+                            favoritesRepository.getCachedFavorites(favoriteIds)
+                                .onSuccess { cached ->
+                                    if (cached.isEmpty()) {
+                                        emitEffect(
+                                            ProductsEffect.ShowError(
+                                                message = error.message
+                                                    ?: "Failed to load favorites"
+                                            )
+                                        )
+                                    }
+                                }
+                        }
+                } catch (e: Exception) {
+                    // Only show error if no cached data is available
+                    emitEffect(
+                        ProductsEffect.ShowError(
+                            message = e.message ?: "Failed to load favorites"
+                        )
+                    )
+                } finally {
+                    dispatchMutation(ProductsMutation.SetLoadingFavorites(isLoading = false))
+                }
+            }
+        }
+    }
+
     private fun handleAddToBasket(
         product: Product,
         quantity: Int
@@ -288,6 +351,13 @@ class ProductsStore(
 
         dispatchMutation(mutation = ProductsMutation.FavoriteToggled(productId = productId))
         emitEffect(effect = ProductsEffect.ShowFavoriteToggled(isAdded = isAdded))
+
+        // Remove from cache if unfavorited
+        if (!isAdded) {
+            scope.launch {
+                favoritesRepository.removeFromCache(productId)
+            }
+        }
     }
 
     private fun handleSetDeliveryAddress(address: DeliveryAddress) {

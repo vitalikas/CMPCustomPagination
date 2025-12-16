@@ -43,7 +43,7 @@ import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component.Pro
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component.ProductCardHorizontal
 
 @Composable
-fun ProductListScreen(
+fun ProductsScreen(
     state: ProductsState,
     onIntent: (ProductsIntent) -> Unit,
     onProductClick: (Long) -> Unit = {},

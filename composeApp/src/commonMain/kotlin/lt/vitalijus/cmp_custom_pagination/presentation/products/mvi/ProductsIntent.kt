@@ -9,6 +9,8 @@ import lt.vitalijus.cmp_custom_pagination.presentation.products.Screen
 sealed interface ProductsIntent {
 
     data object LoadMore : ProductsIntent
+    data class LoadFavorites(val favoriteIds: Set<Long>) :
+        ProductsIntent  // Load specific products by IDs
     data class AddToBasket(
         val product: Product,
         val quantity: Int

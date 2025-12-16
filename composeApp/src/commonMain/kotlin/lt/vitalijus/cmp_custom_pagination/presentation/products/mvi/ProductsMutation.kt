@@ -42,6 +42,16 @@ sealed interface ProductsMutation {
         val productId: Long
     ) : ProductsMutation
 
+    @JvmInline
+    value class SetLoadingFavorites(
+        val isLoading: Boolean
+    ) : ProductsMutation
+
+    @JvmInline
+    value class FavoritesLoaded(
+        val products: List<Product>
+    ) : ProductsMutation
+
     // Order flow mutations
     @JvmInline
     value class DeliveryAddressSet(

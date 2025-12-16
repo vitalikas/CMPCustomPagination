@@ -54,6 +54,21 @@ object ProductsReducer {
                 )
             }
 
+            is ProductsMutation.SetLoadingFavorites -> {
+                state.copy(
+                    isLoadingFavorites = mutation.isLoading,
+                    error = if (mutation.isLoading) null else state.error
+                )
+            }
+
+            is ProductsMutation.FavoritesLoaded -> {
+                state.copy(
+                    favoriteProductsData = mutation.products,
+                    isLoadingFavorites = false,
+                    error = null
+                )
+            }
+
             is ProductsMutation.DeliveryAddressSet -> {
                 state.copy(
                     currentDeliveryAddress = mutation.address
@@ -70,7 +85,9 @@ object ProductsReducer {
                 state.copy(
                     currentOrder = mutation.order,
                     orders = state.orders + mutation.order,
-                    basketItems = emptyList() // Clear basket after order creation
+                    basketItems = emptyList(), // Clear basket after order creation
+                    currentDeliveryAddress = null, // Clear delivery address for next order
+                    currentPaymentMethod = null // Clear payment method for next order
                 )
             }
 

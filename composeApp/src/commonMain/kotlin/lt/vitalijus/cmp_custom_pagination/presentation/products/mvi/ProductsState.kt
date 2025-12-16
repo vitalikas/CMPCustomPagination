@@ -13,7 +13,9 @@ data class ProductsState(
     val products: List<Product> = emptyList(),
     val basketItems: List<BasketItem> = emptyList(),
     val favoriteProductIds: Set<Long> = emptySet(),
+    val favoriteProductsData: List<Product> = emptyList(), // Products loaded specifically for favorites screen
     val isLoadingMore: Boolean = false,
+    val isLoadingFavorites: Boolean = false,
     val error: String? = null,
     val currentDeliveryAddress: DeliveryAddress? = null,
     val currentPaymentMethod: PaymentMethod? = null,

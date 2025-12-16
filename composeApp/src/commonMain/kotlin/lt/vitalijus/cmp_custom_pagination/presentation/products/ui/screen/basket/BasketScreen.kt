@@ -40,6 +40,7 @@ fun BasketScreen(
     state: ProductsState,
     onIntent: (ProductsIntent) -> Unit,
     onProductClick: (Long) -> Unit = {},
+    onProceedToCheckout: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -141,7 +142,7 @@ fun BasketScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
-                    onClick = { onIntent(ProductsIntent.NavigateTo(lt.vitalijus.cmp_custom_pagination.presentation.products.Screen.Delivery)) },
+                    onClick = onProceedToCheckout,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Proceed to Checkout")

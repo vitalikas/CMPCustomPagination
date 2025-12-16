@@ -1,38 +1,37 @@
 package lt.vitalijus.cmp_custom_pagination.data.persistence
 
 import android.content.Context
-import android.content.SharedPreferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 
-class AndroidKeyValueStorage(context: Context) : KeyValueStorage {
-    private val prefs: SharedPreferences = context.getSharedPreferences(
-        "app_prefs",
-        Context.MODE_PRIVATE
-    )
+private val Context.dataStore by preferencesDataStore(name = "app_preferences")
 
-    override fun putString(key: String, value: String) {
-        prefs.edit().putString(key, value).apply()
+class AndroidKeyValueStorage(private val context: Context) : KeyValueStorage {
+
+    override suspend fun putString(key: String, value: String) {
+        context.dataStore.edit { preferences ->
+            preferences[stringPreferencesKey(key)] = value
+        }
     }
 
-    override fun getString(key: String): String? {
-        return prefs.getString(key, null)
+    override suspend fun getString(key: String): String? {
+        return context.dataStore.data.map { preferences ->
+            preferences[stringPreferencesKey(key)]
+        }.first()
     }
 
-    override fun remove(key: String) {
-        prefs.edit().remove(key).apply()
+    override suspend fun remove(key: String) {
+        context.dataStore.edit { preferences ->
+            preferences.remove(stringPreferencesKey(key))
+        }
     }
 
-    override fun clear() {
-        prefs.edit().clear().apply()
+    override suspend fun clear() {
+        context.dataStore.edit { preferences ->
+            preferences.clear()
+        }
     }
-}
-
-private var storageInstance: KeyValueStorage? = null
-
-fun initializeStorage(context: Context) {
-    storageInstance = AndroidKeyValueStorage(context)
-}
-
-actual fun createKeyValueStorage(): KeyValueStorage {
-    return storageInstance
-        ?: throw IllegalStateException("Storage not initialized. Call initializeStorage() first.")
 }
