@@ -14,6 +14,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -23,26 +24,26 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
+import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOWER_BOUND
 import lt.vitalijus.cmp_custom_pagination.di.AppKoinComponent
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ProductsViewModel
 import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsEffect
 import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsIntent
 import lt.vitalijus.cmp_custom_pagination.presentation.products.navigation.ScreenTitleProvider
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component.AppIcons
+import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.scenes.FavoritesDetailScene
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.scenes.ListDetailScene
-import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.scenes.rememberListDetailSceneStrategy
+import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.scenes.rememberDynamicSceneStrategy
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.basket.BasketScreen
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.details.ProductDetailsScreen
+import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.favorites.FavoritesScreen
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.order.DeliveryScreen
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.order.OrderRatingScreen
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.order.OrderTrackingScreen
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.order.OrdersHistoryScreen
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.order.PaymentScreen
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.products.ProductsScreen
-import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.favorites.FavoritesScreen
 import org.koin.core.component.inject
-import kotlin.collections.component1
-import kotlin.collections.component2
 
 @Composable
 fun NavigationRoot(
@@ -73,6 +74,44 @@ fun NavigationRoot(
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // Check if we're on a wide screen that would show list-detail scene
+    val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
+    val isWideScreen = windowSizeClass.isWidthAtLeastBreakpoint(WIDTH_DP_MEDIUM_LOWER_BOUND)
+
+    // Auto-navigate to first product on wide screens for list-detail scene
+    LaunchedEffect(
+        isWideScreen,
+        topLevelRoute,
+        state.products,
+        state.favoriteProductIds,
+        state.favoriteProductsData
+    ) {
+        when {
+            // Auto-navigate to first product in Products list
+            isWideScreen &&
+                    topLevelRoute == Route.Products &&
+                    currentRoute == Route.Products &&
+                    state.products.isNotEmpty() -> {
+                val firstProductId = state.products.first().id
+                navigator.navigate(Route.ProductDetail(productId = firstProductId))
+            }
+            // Auto-navigate to first favorite product in Favorites list
+            isWideScreen &&
+                    topLevelRoute == Route.Favorites &&
+                    currentRoute == Route.Favorites &&
+                    state.favoriteProductIds.isNotEmpty() -> {
+                // Ensure favorite products are loaded
+                viewModel.processIntent(ProductsIntent.LoadFavorites(state.favoriteProductIds))
+
+                // Wait for favoriteProductsData to be loaded, then navigate to first one
+                if (state.favoriteProductsData.isNotEmpty()) {
+                    val firstFavoriteProductId = state.favoriteProductsData.first().id
+                    navigator.navigate(Route.ProductDetail(productId = firstFavoriteProductId))
+                }
+            }
+        }
+    }
 
     // Handle effects
     LaunchedEffect(Unit) {
@@ -109,12 +148,19 @@ fun NavigationRoot(
 
             // Determine if we should show back button
             // Only show back button for nested screens (not top-level destinations)
+            // Hide back button when list-detail scene is active (wide screen + ProductDetail)
             val showBackButton = when (currentRoute) {
                 Route.Products -> false
                 Route.Favorites -> false
                 Route.Basket -> false
                 Route.Orders -> false
-                is Route.ProductDetail -> true
+                is Route.ProductDetail -> {
+                    // Don't show back button if scene is active (wide screen with Products or Favorites)
+                    val isSceneActive = isWideScreen &&
+                            (topLevelRoute == Route.Products || topLevelRoute == Route.Favorites)
+                    !isSceneActive
+                }
+
                 null -> false
                 else -> backstackSize > 1
             }
@@ -180,8 +226,16 @@ fun NavigationRoot(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            onBack = navigator::goBack,
-            sceneStrategy = rememberListDetailSceneStrategy(),
+            onBack = {
+                // Don't allow back navigation when scene is active and viewing ProductDetail
+                val isSceneActive = isWideScreen &&
+                        currentRoute is Route.ProductDetail &&
+                        (topLevelRoute == Route.Products || topLevelRoute == Route.Favorites)
+                if (!isSceneActive) {
+                    navigator.goBack()
+                }
+            },
+            sceneStrategy = rememberDynamicSceneStrategy(),
             entries = navigationState.toEntries(
                 entryProvider {
                     entry<Route.Products>(
@@ -199,9 +253,13 @@ fun NavigationRoot(
                         )
                     }
                     entry<Route.ProductDetail>(
-                        metadata = ListDetailScene.detailPane()
+                        metadata = ListDetailScene.detailPane() + FavoritesDetailScene.detailPane()
                     ) { it ->
+                        // Try to find product in both products list (from Products tab) 
+                        // and favoriteProductsData (from Favorites tab)
                         val product = state.products.find { product ->
+                            product.id == it.productId
+                        } ?: state.favoriteProductsData.find { product ->
                             product.id == it.productId
                         } ?: return@entry
 
@@ -242,7 +300,9 @@ fun NavigationRoot(
                             }
                         )
                     }
-                    entry<Route.Favorites> {
+                    entry<Route.Favorites>(
+                        metadata = FavoritesDetailScene.listPane()
+                    ) {
                         FavoritesScreen(
                             state = state,
                             onProductClick = { productId ->
@@ -270,7 +330,7 @@ fun NavigationRoot(
                         DeliveryScreen(
                             onProceedToPayment = { address ->
                                 viewModel.processIntent(
-                                    intent = ProductsIntent.SetDeliveryAddress(address)
+                                    intent = ProductsIntent.SetDeliveryAddress(address = address)
                                 )
                                 navigator.navigate(route = Route.Payment)
                             }
