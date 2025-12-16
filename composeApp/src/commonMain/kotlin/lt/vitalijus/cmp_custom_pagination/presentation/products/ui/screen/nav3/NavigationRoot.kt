@@ -25,9 +25,12 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import lt.vitalijus.cmp_custom_pagination.di.AppKoinComponent
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ProductsViewModel
+import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsEffect
 import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsIntent
 import lt.vitalijus.cmp_custom_pagination.presentation.products.navigation.ScreenTitleProvider
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component.AppIcons
+import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.scenes.ListDetailScene
+import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.scenes.rememberListDetailSceneStrategy
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.basket.BasketScreen
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.details.ProductDetailsScreen
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.screen.order.DeliveryScreen
@@ -75,11 +78,11 @@ fun NavigationRoot(
     LaunchedEffect(Unit) {
         viewModel.effects.collect { effect ->
             when (effect) {
-                is lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsEffect.ShowError -> {
+                is ProductsEffect.ShowError -> {
                     snackbarHostState.showSnackbar(effect.message)
                 }
 
-                is lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsEffect.OrderCreated -> {
+                is ProductsEffect.OrderCreated -> {
                     // Navigate to orders top-level destination
                     // Note: Basket is automatically cleared by the OrderCreated mutation in the reducer
                     // Clear the Basket's navigation stack (remove Delivery/Payment screens)
@@ -87,7 +90,7 @@ fun NavigationRoot(
                     navigator.navigate(Route.Orders)
                 }
 
-                is lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsEffect.OrderDelivered -> {
+                is ProductsEffect.OrderDelivered -> {
                     snackbarHostState.showSnackbar("Your order has been delivered!")
                 }
 
@@ -160,11 +163,13 @@ fun NavigationRoot(
             )
         },
         bottomBar = {
-            TodoNavigationBar(
+            BottomNavigationBar(
                 selectedKey = navigationState.topLevelRoute,
                 onSelectKey = { selectedKey ->
                     navigator.navigate(route = selectedKey)
-                }
+                },
+                basketItemCount = state.totalQuantity,
+                favoritesItemCount = state.favoriteProductIds.size
             )
         },
         snackbarHost = {
@@ -176,9 +181,12 @@ fun NavigationRoot(
                 .fillMaxSize()
                 .padding(innerPadding),
             onBack = navigator::goBack,
+            sceneStrategy = rememberListDetailSceneStrategy(),
             entries = navigationState.toEntries(
                 entryProvider {
-                    entry<Route.Products> {
+                    entry<Route.Products>(
+                        metadata = ListDetailScene.listPane()
+                    ) {
                         ProductsScreen(
                             state = state,
                             onIntent = viewModel::processIntent,
@@ -190,7 +198,9 @@ fun NavigationRoot(
                             }
                         )
                     }
-                    entry<Route.ProductDetail> { it ->
+                    entry<Route.ProductDetail>(
+                        metadata = ListDetailScene.detailPane()
+                    ) { it ->
                         val product = state.products.find { product ->
                             product.id == it.productId
                         } ?: return@entry

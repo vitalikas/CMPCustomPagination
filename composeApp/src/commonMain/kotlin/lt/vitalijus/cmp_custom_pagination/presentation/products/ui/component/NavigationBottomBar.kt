@@ -70,7 +70,7 @@ fun NavigationBottomBar(
                             Icon(
                                 imageVector = iconVector,
                                 contentDescription = screen.route,
-                                tint = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = if (isSelected) Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -96,26 +96,26 @@ fun NavigationBottomBar(
                             Icon(
                                 imageVector = iconVector,
                                 contentDescription = screen.route,
-                                tint = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = if (isSelected) Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     } else {
                         Icon(
                             imageVector = iconVector,
                             contentDescription = screen.route,
-                            tint = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = if (isSelected) Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 },
                 label = {
                     Text(
                         text = screen.route,
-                        color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                        color = if (isSelected) Color(0xFF4CAF50) else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Color.White,
-                    selectedTextColor = Color.White,
+                    selectedIconColor = Color(0xFF4CAF50),
+                    selectedTextColor = Color(0xFF4CAF50),
                     indicatorColor = Color.Transparent,
                     unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant

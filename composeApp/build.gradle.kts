@@ -26,14 +26,7 @@ kotlin {
         }
 
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
-        instrumentedTestVariant {
-            sourceSetTree.set(KotlinSourceSetTree.test)
-
-            dependencies {
-                implementation(libs.androidx.compose.ui.test.junit4)
-                debugImplementation(libs.androidx.compose.ui.test.manifest)
-            }
-        }
+        instrumentedTestVariant.sourceSetTree.set(KotlinSourceSetTree.test)
     }
 
     listOf(
@@ -65,6 +58,9 @@ kotlin {
             implementation(libs.androidx.room.runtime)
             implementation(libs.androidx.sqlite.bundled)
         }
+        androidInstrumentedTest.dependencies {
+            implementation(libs.androidx.compose.ui.test.junit4)
+        }
         commonMain.dependencies {
             implementation(compose.runtime)
             implementation(compose.foundation)
@@ -94,6 +90,8 @@ kotlin {
             implementation(libs.jetbrains.navigation3.ui)
             implementation(libs.jetbrains.lifecycle.viewmodel.nav3)
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.material3.adaptive)
+            implementation(libs.material3.adaptive.layout)
 
             implementation(libs.androidx.room.runtime)
             implementation(libs.androidx.sqlite.bundled)
@@ -144,6 +142,7 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
     add("kspAndroid", libs.androidx.room.compiler)
     add("kspIosSimulatorArm64", libs.androidx.room.compiler)
     add("kspIosX64", libs.androidx.room.compiler)

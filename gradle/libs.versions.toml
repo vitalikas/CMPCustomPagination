@@ -5,29 +5,29 @@ android-minSdk = "24"
 android-targetSdk = "36"
 androidx-activity = "1.12.1"
 androidx-appcompat = "1.7.1"
-androidx-compose-ui = "1.8.2"
+androidx-compose-ui = "1.10.0"
 androidx-constraintlayout = "2.2.1"
 androidx-core = "1.17.0"
-androidx-espresso = "3.6.1"
+androidx-espresso = "3.7.0"
 androidx-lifecycle = "2.10.0-alpha06"
 androidx-navigation = "2.9.0-beta03"
 androidx-testExt = "1.2.1"
-androidx-datastore = "1.1.1"
-androidx-room = "2.7.0-alpha12"
-sqlite = "2.5.0-alpha12"
-coil = "3.0.4"
-composeHotReload = "1.0.0-alpha11"
+androidx-datastore = "1.2.0"
+androidx-room = "2.8.4"
+sqlite = "2.6.2"
+coil = "3.3.0"
+composeHotReload = "1.0.0"
 composeMultiplatform = "1.9.3"
 junit = "4.13.2"
-kotlin = "2.2.0"
-ksp = "2.2.10-2.0.2"
+kotlin = "2.2.21"
+ksp = "2.2.21-2.0.4"
 kotlinx-coroutines = "1.10.2"
-ktor = "3.2.1"
-koin = "3.5.6"
-kotzilla = "1.4.0"
+ktor = "3.3.3"
+koin = "4.1.1"
+kotzilla = "1.4.1"
 cmpNavigation3 = "1.0.0-alpha06"
 kotlin-serialization = "1.9.0"
-
+adaptive = "1.2.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -73,7 +73,9 @@ kotzilla-sdk = { group = "io.kotzilla", name = "kotzilla-sdk", version.ref = "ko
 # Navigation 3
 jetbrains-navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", version.ref = "cmpNavigation3" }
 jetbrains-lifecycle-viewmodel-nav3 = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "androidx-lifecycle" }
-kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version = "serialization" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version = "kotlin-serialization" }
+material3-adaptive = { module = "org.jetbrains.compose.material3.adaptive:adaptive", version.ref = "adaptive" }
+material3-adaptive-layout = { module = "org.jetbrains.compose.material3.adaptive:adaptive-layout", version.ref = "adaptive" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
