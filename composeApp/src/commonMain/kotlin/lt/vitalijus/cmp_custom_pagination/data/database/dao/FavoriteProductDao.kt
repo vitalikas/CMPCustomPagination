@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
 import lt.vitalijus.cmp_custom_pagination.data.database.entity.FavoriteProductEntity
 
 /**
@@ -13,7 +14,14 @@ import lt.vitalijus.cmp_custom_pagination.data.database.entity.FavoriteProductEn
 interface FavoriteProductDao {
 
     /**
-     * Get all cached favorite products by their IDs
+     * Observe all cached favorite products by their IDs (reactive)
+     * This Flow automatically emits when the database changes
+     */
+    @Query("SELECT * FROM favorite_products WHERE id IN (:ids)")
+    fun observeProductsByIds(ids: Set<Long>): Flow<List<FavoriteProductEntity>>
+
+    /**
+     * Get all cached favorite products by their IDs (one-time)
      */
     @Query("SELECT * FROM favorite_products WHERE id IN (:ids)")
     suspend fun getProductsByIds(ids: Set<Long>): List<FavoriteProductEntity>
