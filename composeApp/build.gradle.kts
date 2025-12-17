@@ -57,6 +57,7 @@ kotlin {
             implementation(libs.androidx.datastore.preferences)
             implementation(libs.androidx.room.runtime)
             implementation(libs.androidx.sqlite.bundled)
+            implementation(libs.androidx.work.runtime.ktx)
         }
         androidInstrumentedTest.dependencies {
             implementation(libs.androidx.compose.ui.test.junit4)
