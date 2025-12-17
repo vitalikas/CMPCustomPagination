@@ -1,11 +1,16 @@
 package lt.vitalijus.cmp_custom_pagination.presentation.products.mvi
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -13,12 +18,11 @@ import lt.vitalijus.cmp_custom_pagination.core.utils.currentTimeMillis
 import lt.vitalijus.cmp_custom_pagination.core.utils.pager.ProductPager
 import lt.vitalijus.cmp_custom_pagination.data.persistence.OrderRepository
 import lt.vitalijus.cmp_custom_pagination.data.repository.FavoritesRepository
-import lt.vitalijus.cmp_custom_pagination.data.source.remote.api.ProductApi
-import lt.vitalijus.cmp_custom_pagination.domain.model.Product
 import lt.vitalijus.cmp_custom_pagination.domain.model.DeliveryAddress
-import lt.vitalijus.cmp_custom_pagination.domain.model.PaymentMethod
 import lt.vitalijus.cmp_custom_pagination.domain.model.Order
 import lt.vitalijus.cmp_custom_pagination.domain.model.OrderStatus
+import lt.vitalijus.cmp_custom_pagination.domain.model.PaymentMethod
+import lt.vitalijus.cmp_custom_pagination.domain.model.Product
 import lt.vitalijus.cmp_custom_pagination.domain.model.ProductRating
 import lt.vitalijus.cmp_custom_pagination.domain.paging.PagingEvent
 import lt.vitalijus.cmp_custom_pagination.domain.paging.ProductPagingFactory
@@ -231,6 +235,7 @@ class ProductsStore(
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun handleLoadFavorites(favoriteIds: Set<Long>) {
         scope.launch {
             if (favoriteIds.isEmpty()) {
@@ -239,36 +244,45 @@ class ProductsStore(
                 return@launch
             }
 
-            // Step 1: Show cached data immediately (instant display)
-            favoritesRepository.getCachedFavorites(favoriteIds)
-                .onSuccess { cachedProducts ->
-                    if (cachedProducts.isNotEmpty()) {
-                        // Display cached data instantly
-                        dispatchMutation(ProductsMutation.FavoritesLoaded(products = cachedProducts))
+            // Show loading indicator initially
+            dispatchMutation(ProductsMutation.SetLoadingFavorites(isLoading = true))
+
+            // Collect from reactive Flow - observe CURRENT favorite IDs from state!
+            // Use flatMapLatest to cancel previous Flow when IDs change
+            state
+                .map { it.favoriteProductIds }
+                .distinctUntilChanged()
+                .flatMapLatest { currentFavoriteIds ->
+                    if (currentFavoriteIds.isEmpty()) {
+                        // No favorites anymore - emit empty flow
+                        flowOf(emptyList())
+                    } else {
+                        // Observe favorites from database for current IDs
+                        // This Flow will be CANCELLED when currentFavoriteIds change!
+                        favoritesRepository.observeFavorites(ids = currentFavoriteIds)
                     }
                 }
+                .collect { products ->
+                    // Update UI with latest data from database
+                    dispatchMutation(ProductsMutation.FavoritesLoaded(products = products))
+                    dispatchMutation(ProductsMutation.SetLoadingFavorites(isLoading = false))
+                }
 
-            // Step 2: Check if we need to refresh from network
+            // Check if we need to refresh from network in the background
             val shouldRefresh = favoritesRepository.shouldRefresh(favoriteIds)
 
             if (shouldRefresh) {
-                // Show loading indicator
-                dispatchMutation(ProductsMutation.SetLoadingFavorites(isLoading = true))
-
                 try {
                     // Fetch fresh data from network and update cache
-                    favoritesRepository.refreshFavorites(favoriteIds)
-                        .onSuccess { freshProducts ->
-                            // Update UI with fresh data
-                            dispatchMutation(ProductsMutation.FavoritesLoaded(products = freshProducts))
-                        }
+                    // The Flow above will automatically emit the new data!
+                    favoritesRepository.refreshFavorites(ids = favoriteIds)
                         .onFailure { error ->
-                            // Only show error if we don't have cached data
-                            favoritesRepository.getCachedFavorites(favoriteIds)
+                            // Only show error if we don't have any cached data
+                            favoritesRepository.getCachedFavorites(ids = favoriteIds)
                                 .onSuccess { cached ->
                                     if (cached.isEmpty()) {
                                         emitEffect(
-                                            ProductsEffect.ShowError(
+                                            effect = ProductsEffect.ShowError(
                                                 message = error.message
                                                     ?: "Failed to load favorites"
                                             )
@@ -277,14 +291,11 @@ class ProductsStore(
                                 }
                         }
                 } catch (e: Exception) {
-                    // Only show error if no cached data is available
                     emitEffect(
-                        ProductsEffect.ShowError(
+                        effect = ProductsEffect.ShowError(
                             message = e.message ?: "Failed to load favorites"
                         )
                     )
-                } finally {
-                    dispatchMutation(ProductsMutation.SetLoadingFavorites(isLoading = false))
                 }
             }
         }
@@ -352,9 +363,19 @@ class ProductsStore(
         dispatchMutation(mutation = ProductsMutation.FavoriteToggled(productId = productId))
         emitEffect(effect = ProductsEffect.ShowFavoriteToggled(isAdded = isAdded))
 
-        // Remove from cache if unfavorited
-        if (!isAdded) {
-            scope.launch {
+        scope.launch {
+            if (isAdded) {
+                // Add to cache when favorited - insert the product immediately into database
+                // Try to find product in products list or favoriteProductsData
+                val product = _state.value.products.find { it.id == productId }
+                    ?: _state.value.favoriteProductsData.find { it.id == productId }
+
+                if (product != null) {
+                    // Insert into database so the Flow will emit it immediately
+                    favoritesRepository.addToCache(product)
+                }
+            } else {
+                // Remove from cache if unfavorited - Flow will emit updated list
                 favoritesRepository.removeFromCache(productId)
             }
         }
