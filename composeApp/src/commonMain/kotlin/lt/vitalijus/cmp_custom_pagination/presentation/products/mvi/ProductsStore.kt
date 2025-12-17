@@ -18,6 +18,7 @@ import lt.vitalijus.cmp_custom_pagination.core.utils.currentTimeMillis
 import lt.vitalijus.cmp_custom_pagination.core.utils.pager.ProductPager
 import lt.vitalijus.cmp_custom_pagination.data.persistence.OrderRepository
 import lt.vitalijus.cmp_custom_pagination.data.repository.FavoritesRepository
+import lt.vitalijus.cmp_custom_pagination.data.repository.ProductsRepository
 import lt.vitalijus.cmp_custom_pagination.domain.model.DeliveryAddress
 import lt.vitalijus.cmp_custom_pagination.domain.model.Order
 import lt.vitalijus.cmp_custom_pagination.domain.model.OrderStatus
@@ -40,6 +41,7 @@ class ProductsStore(
     private val stateMachine: ProductsStateMachine,
     private val orderRepository: OrderRepository,
     private val favoritesRepository: FavoritesRepository,
+    private val productsRepository: ProductsRepository,
     private val scope: CoroutineScope
 ) {
     private val _state = MutableStateFlow(ProductsState())
@@ -58,6 +60,26 @@ class ProductsStore(
         // Load persisted data
         scope.launch {
             loadPersistedData()
+        }
+
+        // Load cached products ONCE on startup (offline-first)
+        scope.launch {
+            productsRepository.getCachedProducts()
+                .onSuccess { cachedProducts ->
+                    if (cachedProducts.isNotEmpty()) {
+                        // Display cached products instantly
+                        dispatchMutation(ProductsMutation.ProductsLoaded(products = cachedProducts))
+                    }
+                }
+        }
+
+        // Check if cache needs refresh in background
+        scope.launch {
+            val shouldRefresh = productsRepository.shouldRefresh()
+            if (shouldRefresh) {
+                // Cache is old or doesn't exist - trigger pager to load
+                pager.loadNextProducts()
+            }
         }
 
         // Collect intents and process them through the state machine
@@ -94,6 +116,12 @@ class ProductsStore(
 
             is PagingEvent.ProductsLoaded -> {
                 dispatchMutation(mutation = ProductsMutation.ProductsLoaded(products = event.products))
+                
+                // Save loaded products to cache for offline access (doesn't fetch again!)
+                scope.launch {
+                    val currentPage = _state.value.products.size / 30
+                    productsRepository.cacheProducts(event.products, page = currentPage)
+                }
             }
 
             is PagingEvent.Error -> {

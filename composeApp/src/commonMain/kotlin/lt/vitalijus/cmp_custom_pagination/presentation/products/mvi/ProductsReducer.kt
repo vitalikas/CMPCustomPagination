@@ -21,8 +21,16 @@ object ProductsReducer {
             }
 
             is ProductsMutation.ProductsLoaded -> {
+                // Deduplicate products by ID (prevents duplicates from cache + pagination)
+                val existingIds = state.products.map { it.id }.toSet()
+                val newProducts = mutation.products.filter { it.id !in existingIds }
+
+                // Add to product cache for instant detail view access
+                val newCache = state.productCache + mutation.products.associateBy { it.id }
+
                 state.copy(
-                    products = state.products + mutation.products,
+                    products = state.products + newProducts,
+                    productCache = newCache,
                     isLoadingMore = false,
                     error = null
                 )
@@ -62,8 +70,12 @@ object ProductsReducer {
             }
 
             is ProductsMutation.FavoritesLoaded -> {
+                // Add favorites to cache for instant access
+                val newCache = state.productCache + mutation.products.associateBy { it.id }
+
                 state.copy(
                     favoriteProductsData = mutation.products,
+                    productCache = newCache,
                     isLoadingFavorites = false,
                     error = null
                 )

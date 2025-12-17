@@ -14,6 +14,7 @@ data class ProductsState(
     val basketItems: List<BasketItem> = emptyList(),
     val favoriteProductIds: Set<Long> = emptySet(),
     val favoriteProductsData: List<Product> = emptyList(), // Products loaded specifically for favorites screen
+    val productCache: Map<Long, Product> = emptyMap(), // Cache of all viewed products for instant access
     val isLoadingMore: Boolean = false,
     val isLoadingFavorites: Boolean = false,
     val error: String? = null,
@@ -37,4 +38,24 @@ data class ProductsState(
 
     val favoriteProducts: List<Product>
         get() = products.filter { it.id in favoriteProductIds }
+    
+    /**
+     * Find a product by ID from any available source (cache, products list, or favorites data).
+     * This ensures instant access regardless of which tab the product was viewed from.
+     */
+    fun findProduct(productId: Long): Product? {
+        // 1. Try cache first (fastest - O(1) lookup)
+        productCache[productId]?.let { return it }
+        
+        // 2. Try current products list
+        products.find { it.id == productId }?.let { return it }
+        
+        // 3. Try favorites data
+        favoriteProductsData.find { it.id == productId }?.let { return it }
+        
+        // 4. Try basket items (product might only exist there)
+        basketItems.find { it.product.id == productId }?.let { return it.product }
+        
+        return null
+    }
 }

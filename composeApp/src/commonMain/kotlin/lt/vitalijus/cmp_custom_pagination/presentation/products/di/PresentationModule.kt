@@ -41,7 +41,8 @@ val presentationModule = module {
             addToBasketUseCase = get(),
             stateMachine = get(),
             orderRepository = get(),
-            favoritesRepository = get()
+            favoritesRepository = get(),
+            productsRepository = get()
         )
     }
 }
