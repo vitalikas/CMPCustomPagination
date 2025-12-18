@@ -5,6 +5,8 @@ import lt.vitalijus.cmp_custom_pagination.domain.model.DeliveryAddress
 import lt.vitalijus.cmp_custom_pagination.domain.model.Order
 import lt.vitalijus.cmp_custom_pagination.domain.model.PaymentMethod
 import lt.vitalijus.cmp_custom_pagination.domain.model.Product
+import lt.vitalijus.cmp_custom_pagination.domain.model.SortOption
+import lt.vitalijus.cmp_custom_pagination.domain.model.ViewLayoutPreference
 import kotlin.jvm.JvmInline
 
 /**
@@ -19,6 +21,13 @@ sealed interface ProductsMutation {
         val isLoading: Boolean
     ) : ProductsMutation
 
+    @JvmInline
+    value class SetLoadingAllItems(
+        val isLoading: Boolean
+    ) : ProductsMutation
+
+    data object AllItemsLoaded : ProductsMutation
+
     // Product mutations
     @JvmInline
     value class ProductsLoaded(
@@ -28,6 +37,30 @@ sealed interface ProductsMutation {
     @JvmInline
     value class LoadingError(
         val message: String
+    ) : ProductsMutation
+
+    // Search mutations
+    @JvmInline
+    value class SearchQueryChanged(
+        val query: String
+    ) : ProductsMutation
+
+    // Sort mutations
+    @JvmInline
+    value class SortOptionChanged(
+        val sortOption: SortOption
+    ) : ProductsMutation
+
+    // View layout mutations
+    @JvmInline
+    value class ViewLayoutModeChanged(
+        val layoutMode: ViewLayoutPreference
+    ) : ProductsMutation
+
+    // Network mutations
+    @JvmInline
+    value class NetworkStatusChanged(
+        val isConnected: Boolean
     ) : ProductsMutation
 
     // Basket mutations

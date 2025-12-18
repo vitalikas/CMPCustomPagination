@@ -19,14 +19,20 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOWER_BOUND
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import lt.vitalijus.cmp_custom_pagination.di.AppKoinComponent
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ProductsViewModel
 import lt.vitalijus.cmp_custom_pagination.presentation.products.mvi.ProductsEffect
@@ -52,8 +58,8 @@ fun NavigationRoot(
     modifier: Modifier = Modifier
 ) {
     val navigationState = rememberNavigationState(
-        startRoute = Route.Products,
-        topLevelRoutes = TOP_LEVEL_DESTINATIONS.keys,
+        startRoute = Route.Products as NavKey,
+        topLevelRoutes = TOP_LEVEL_DESTINATIONS.keys as Set<NavKey>,
     )
 
     // Get current backstack for the active top-level route
@@ -292,15 +298,14 @@ fun NavigationRoot(
                         )
                     }
                     entry<Route.ProductDetail>(
-                        metadata = ListDetailScene.detailPane() + FavoritesDetailScene.detailPane()
+                        metadata = when (topLevelRoute) {
+                            Route.Products -> ListDetailScene.detailPane()
+                            Route.Favorites -> FavoritesDetailScene.detailPane()
+                            else -> emptyMap() // No scene metadata for Basket or other routes
+                        }
                     ) { it ->
-                        // Try to find product in both products list (from Products tab) 
-                        // and favoriteProductsData (from Favorites tab)
-                        val product = state.products.find { product ->
-                            product.id == it.productId
-                        } ?: state.favoriteProductsData.find { product ->
-                            product.id == it.productId
-                        } ?: return@entry
+                        // Try to find product from any available source (Products, Favorites, or Basket)
+                        val product = state.findProduct(it.productId) ?: return@entry
 
                         val isFavorite = state.favoriteProductIds.contains(it.productId)
 
@@ -363,6 +368,43 @@ fun NavigationRoot(
                             orders = state.orders,
                             onOrderClick = { orderId ->
                                 navigator.navigate(route = Route.OrderTracking(orderId = orderId))
+                            }
+                        )
+                    }
+                    entry<Route.Settings> {
+                        val settingsRepository: lt.vitalijus.cmp_custom_pagination.data.persistence.SettingsRepository by AppKoinComponent.inject()
+                        val settings by remember {
+                            mutableStateOf(
+                                runBlocking { settingsRepository.getSettings() }
+                            )
+                        }
+                        var currentSettings by remember { mutableStateOf(settings) }
+                        
+                        lt.vitalijus.cmp_custom_pagination.presentation.settings.SettingsScreen(
+                            settings = currentSettings,
+                            onViewLayoutChange = { preference ->
+                                viewModel.viewModelScope.launch {
+                                    settingsRepository.saveViewLayoutPreference(preference)
+                                    currentSettings = currentSettings.copy(viewLayoutPreference = preference)
+                                }
+                            },
+                            onNotificationsChange = { enabled ->
+                                viewModel.viewModelScope.launch {
+                                    settingsRepository.saveNotificationsEnabled(enabled)
+                                    currentSettings = currentSettings.copy(enableNotifications = enabled)
+                                }
+                            },
+                            onAnalyticsChange = { enabled ->
+                                viewModel.viewModelScope.launch {
+                                    settingsRepository.saveAnalyticsEnabled(enabled)
+                                    currentSettings = currentSettings.copy(enableAnalytics = enabled)
+                                }
+                            },
+                            onResetToDefaults = {
+                                viewModel.viewModelScope.launch {
+                                    settingsRepository.resetToDefaults()
+                                    currentSettings = settingsRepository.getSettings()
+                                }
                             }
                         )
                     }

@@ -1,7 +1,9 @@
 package lt.vitalijus.cmp_custom_pagination.data.di
 
 import lt.vitalijus.cmp_custom_pagination.data.persistence.LocalOrderRepository
+import lt.vitalijus.cmp_custom_pagination.data.persistence.LocalSettingsRepository
 import lt.vitalijus.cmp_custom_pagination.data.persistence.OrderRepository
+import lt.vitalijus.cmp_custom_pagination.data.persistence.SettingsRepository
 import lt.vitalijus.cmp_custom_pagination.data.repository.FavoritesRepository
 import lt.vitalijus.cmp_custom_pagination.data.repository.ProductsRepository
 import lt.vitalijus.cmp_custom_pagination.data.repository.impl.InMemoryProductRepository
@@ -24,6 +26,7 @@ val dataModule = module {
     // Persistence
     // Note: KeyValueStorage and AppDatabase are provided by platform-specific modules
     single<OrderRepository> { LocalOrderRepository(storage = get()) }
+    single<SettingsRepository> { LocalSettingsRepository(keyValueStorage = get()) }
     single { FavoritesRepository(favoriteProductDao = get(), productApi = get()) }
     single { ProductsRepository(productApi = get(), cachedProductDao = get()) }
 }

@@ -1,7 +1,6 @@
 package lt.vitalijus.cmp_custom_pagination.data.repository.impl
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import lt.vitalijus.cmp_custom_pagination.data.mapper.toProductItem
 import lt.vitalijus.cmp_custom_pagination.data.source.remote.api.ProductApi
@@ -16,7 +15,7 @@ class OffsetBasedProductRepository(
         page: Int,
         pageSize: Int
     ): Result<ProductItem> {
-        return withContext(Dispatchers.IO) {
+        return withContext(Dispatchers.Default) {
             productApi.getProducts(page, pageSize).map { productResponseDto ->
                 productResponseDto.toProductItem()
             }

@@ -11,7 +11,7 @@ import kotlinx.serialization.json.Json
 import org.koin.dsl.module
 
 val networkModule = module {
-    single(createdAtStart = true) {
+    single {
         HttpClient(HttpClientEngineFactory().create()) {
             install(Logging) {
                 logger = Logger.SIMPLE

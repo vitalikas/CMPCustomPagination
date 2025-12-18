@@ -4,13 +4,19 @@ import lt.vitalijus.cmp_custom_pagination.domain.model.DeliveryAddress
 import lt.vitalijus.cmp_custom_pagination.domain.model.OrderStatus
 import lt.vitalijus.cmp_custom_pagination.domain.model.PaymentMethod
 import lt.vitalijus.cmp_custom_pagination.domain.model.Product
+import lt.vitalijus.cmp_custom_pagination.domain.model.SortOption
+import lt.vitalijus.cmp_custom_pagination.domain.model.ViewLayoutPreference
 import lt.vitalijus.cmp_custom_pagination.presentation.products.Screen
 
 sealed interface ProductsIntent {
 
     data object LoadMore : ProductsIntent
+    data object LoadAllItems : ProductsIntent  // Load all remaining items (for sorting)
     data class LoadFavorites(val favoriteIds: Set<Long>) :
         ProductsIntent  // Load specific products by IDs
+    data class SearchProducts(val query: String) : ProductsIntent
+    data class SetSortOption(val sortOption: SortOption) : ProductsIntent
+    data class SetViewLayoutMode(val layoutMode: ViewLayoutPreference) : ProductsIntent
     data class AddToBasket(
         val product: Product,
         val quantity: Int

@@ -25,7 +25,9 @@ class ProductsViewModel(
     stateMachine: ProductsStateMachine,
     orderRepository: OrderRepository,
     favoritesRepository: FavoritesRepository,
-    productsRepository: ProductsRepository
+    productsRepository: ProductsRepository,
+    settingsRepository: lt.vitalijus.cmp_custom_pagination.data.persistence.SettingsRepository,
+    networkMonitor: lt.vitalijus.cmp_custom_pagination.data.network.NetworkMonitor
 ) : ViewModel() {
 
     private val store = ProductsStore(
@@ -35,6 +37,8 @@ class ProductsViewModel(
         orderRepository = orderRepository,
         favoritesRepository = favoritesRepository,
         productsRepository = productsRepository,
+        settingsRepository = settingsRepository,
+        networkMonitor = networkMonitor,
         scope = viewModelScope
     )
 

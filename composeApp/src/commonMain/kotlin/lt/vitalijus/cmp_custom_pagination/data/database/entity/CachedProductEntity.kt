@@ -3,6 +3,7 @@ package lt.vitalijus.cmp_custom_pagination.data.database.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import lt.vitalijus.cmp_custom_pagination.domain.model.Product
+import lt.vitalijus.cmp_custom_pagination.domain.model.Review
 
 /**
  * Room entity for caching products from the Products screen.
@@ -17,6 +18,9 @@ data class CachedProductEntity(
     val category: String?,
     val brand: String?,
     val thumbnail: String?,
+    val rating: Double?, // Product rating
+    val images: List<String>?, // Image URLs array
+    val reviews: List<Review>?, // Customer reviews
     val cachedAt: Long, // Timestamp in milliseconds when cached
     val page: Int = 0 // Which page this product belongs to (for pagination tracking)
 ) {
@@ -31,7 +35,10 @@ data class CachedProductEntity(
             price = price,
             category = category,
             brand = brand,
-            thumbnail = thumbnail
+            thumbnail = thumbnail,
+            rating = rating,
+            images = images,
+            reviews = reviews
         )
     }
 
@@ -52,6 +59,9 @@ data class CachedProductEntity(
                 category = product.category,
                 brand = product.brand,
                 thumbnail = product.thumbnail,
+                rating = product.rating,
+                images = product.images,
+                reviews = product.reviews,
                 cachedAt = cachedAt,
                 page = page
             )

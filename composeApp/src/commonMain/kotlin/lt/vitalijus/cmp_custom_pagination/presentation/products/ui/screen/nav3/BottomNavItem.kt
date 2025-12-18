@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.ShoppingBasket
 import androidx.compose.ui.graphics.vector.ImageVector
 import cmpcustompagination.composeapp.generated.resources.Res
@@ -11,6 +12,7 @@ import cmpcustompagination.composeapp.generated.resources.basket
 import cmpcustompagination.composeapp.generated.resources.favorite
 import cmpcustompagination.composeapp.generated.resources.orders
 import cmpcustompagination.composeapp.generated.resources.products
+import cmpcustompagination.composeapp.generated.resources.settings
 import org.jetbrains.compose.resources.StringResource
 
 data class BottomNavItem(
@@ -34,5 +36,9 @@ val TOP_LEVEL_DESTINATIONS = mapOf(
     Route.Orders to BottomNavItem(
         icon = Icons.Outlined.Checklist,
         titleRes = Res.string.orders
+    ),
+    Route.Settings to BottomNavItem(
+        icon = Icons.Outlined.Settings,
+        titleRes = Res.string.settings
     ),
 )

@@ -45,7 +45,7 @@ fun BottomNavigationBar(
             NavigationBarItem(
                 selected = isSelected,
                 onClick = {
-                    onSelectKey(routeKey)
+                    onSelectKey(routeKey as NavKey)
                 },
                 icon = {
                     if (showBadge) {

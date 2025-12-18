@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import lt.vitalijus.cmp_custom_pagination.core.utils.currentTimeMillis
 import lt.vitalijus.cmp_custom_pagination.core.utils.pager.ProductPager
+import lt.vitalijus.cmp_custom_pagination.data.network.NetworkMonitor
 import lt.vitalijus.cmp_custom_pagination.data.persistence.OrderRepository
 import lt.vitalijus.cmp_custom_pagination.data.repository.FavoritesRepository
 import lt.vitalijus.cmp_custom_pagination.data.repository.ProductsRepository
@@ -42,6 +43,8 @@ class ProductsStore(
     private val orderRepository: OrderRepository,
     private val favoritesRepository: FavoritesRepository,
     private val productsRepository: ProductsRepository,
+    private val settingsRepository: lt.vitalijus.cmp_custom_pagination.data.persistence.SettingsRepository,
+    private val networkMonitor: NetworkMonitor,
     private val scope: CoroutineScope
 ) {
     private val _state = MutableStateFlow(ProductsState())
@@ -57,9 +60,18 @@ class ProductsStore(
     val intentFlow = _intentFlow.asSharedFlow()
 
     init {
-        // Load persisted data
+        // Load persisted data including layout preference
         scope.launch {
             loadPersistedData()
+            
+            // Monitor network connectivity
+            networkMonitor.isConnected.collect { isConnected ->
+                dispatchMutation(ProductsMutation.NetworkStatusChanged(isConnected))
+            }
+            
+            // Load saved layout preference
+            val savedPreference = settingsRepository.getSettings().viewLayoutPreference
+            dispatchMutation(ProductsMutation.ViewLayoutModeChanged(savedPreference))
         }
 
         // Load cached products ONCE on startup (offline-first)
@@ -92,13 +104,17 @@ class ProductsStore(
 
     private suspend fun loadPersistedData() {
         val orders = orderRepository.getOrders()
+        val basket = orderRepository.getBasket()
         val favorites = orderRepository.getFavorites()
         val deliveryAddress = orderRepository.getLastDeliveryAddress()
         val paymentMethod = orderRepository.getLastPaymentMethod()
 
+        println("🔄 DEBUG: Loading persisted data - basket size: ${basket.size}")
+
         _state.update {
             it.copy(
                 orders = orders,
+                basketItems = basket,
                 favoriteProductIds = favorites,
                 currentDeliveryAddress = deliveryAddress,
                 currentPaymentMethod = paymentMethod
@@ -125,16 +141,28 @@ class ProductsStore(
             }
 
             is PagingEvent.Error -> {
-                dispatchMutation(
-                    mutation = ProductsMutation.LoadingError(
-                        message = event.message ?: "Unknown error"
+                // Only show error if we have no data (not in offline mode with cached data)
+                val hasData = _state.value.products.isNotEmpty()
+                
+                if (hasData) {
+                    // We have cached data - this is offline mode, not a real error
+                    println("ℹ️ Network unavailable, working in offline mode with ${_state.value.products.size} cached items")
+                    // Don't dispatch error mutation or show error effect
+                    // Just mark loading as complete
+                    dispatchMutation(ProductsMutation.SetLoading(isLoading = false))
+                } else {
+                    // No data available - this is a real error
+                    dispatchMutation(
+                        mutation = ProductsMutation.LoadingError(
+                            message = event.message ?: "Unknown error"
+                        )
                     )
-                )
-                emitEffect(
-                    effect = ProductsEffect.ShowError(
-                        message = event.message ?: "Unknown error"
+                    emitEffect(
+                        effect = ProductsEffect.ShowError(
+                            message = event.message ?: "Unknown error"
+                        )
                     )
-                )
+                }
             }
         }
     }
@@ -155,12 +183,17 @@ class ProductsStore(
     private fun handleIntent(intent: ProductsIntent) {
         try {
             // Validate transition
+            println("🔍 DEBUG: Processing intent: $intent")
             stateMachine.transition(intent)
 
             // Execute the intent
             when (intent) {
                 ProductsIntent.LoadMore -> handleLoadMore()
+                ProductsIntent.LoadAllItems -> handleLoadAllItems()
                 is ProductsIntent.LoadFavorites -> handleLoadFavorites(intent.favoriteIds)
+                is ProductsIntent.SearchProducts -> handleSearchProducts(intent.query)
+                is ProductsIntent.SetSortOption -> handleSetSortOption(intent.sortOption)
+                is ProductsIntent.SetViewLayoutMode -> handleSetViewLayoutMode(intent.layoutMode)
 
                 is ProductsIntent.AddToBasket -> handleAddToBasket(intent.product, intent.quantity)
 
@@ -195,9 +228,10 @@ class ProductsStore(
                     intent.comment
                 )
             }
-        } catch (_: IllegalStateException) {
+        } catch (e: IllegalStateException) {
             // Invalid transition blocked by state machine
             // This is expected during fast scrolling/pagination - silently ignore
+            println("⚠️ DEBUG: State machine blocked intent: $intent, error: ${e.message}")
         }
     }
 
@@ -230,6 +264,12 @@ class ProductsStore(
                 }
             }
 
+            is ProductsMutation.BasketUpdated -> {
+                // Persist basket items whenever they change
+                println("💾 DEBUG: Persisting basket items - size: ${state.basketItems.size}")
+                orderRepository.saveBasket(state.basketItems)
+            }
+
             is ProductsMutation.FavoriteToggled -> {
                 orderRepository.saveFavorites(state.favoriteProductIds)
             }
@@ -260,6 +300,76 @@ class ProductsStore(
     private fun handleLoadMore() {
         scope.launch {
             pager.loadNextProducts()
+        }
+    }
+
+    private fun handleLoadAllItems() {
+        scope.launch {
+            dispatchMutation(ProductsMutation.SetLoadingAllItems(isLoading = true))
+            
+            // If already loaded, just mark as complete and return
+            if (_state.value.allItemsLoaded) {
+                println("✓ All items already loaded (${_state.value.products.size} items)")
+                dispatchMutation(ProductsMutation.SetLoadingAllItems(isLoading = false))
+                return@launch
+            }
+            
+            // Keep loading until all items are fetched
+            // Note: Images are loaded but can be lazy-loaded in UI for better performance
+            var consecutiveNoChanges = 0
+            var hasError = false
+            
+            while (!_state.value.allItemsLoaded) {
+                // Check if there are more items to load by attempting to load
+                val currentSize = _state.value.products.size
+                val errorBefore = _state.value.error
+                
+                pager.loadNextProducts()
+                
+                // Wait a bit for the load to complete
+                kotlinx.coroutines.delay(300) // Reduced delay for faster loading
+                
+                // Check if we got an error (network unavailable in offline mode)
+                val errorAfter = _state.value.error
+                if (errorAfter != null && errorAfter != errorBefore && currentSize > 0) {
+                    // We have an error but have cached data - offline mode
+                    println("ℹ️ Working in offline mode with ${currentSize} cached items")
+                    dispatchMutation(ProductsMutation.AllItemsLoaded)
+                    hasError = true
+                    break
+                }
+                
+                // If size hasn't changed after loading, we've reached the end
+                if (_state.value.products.size == currentSize) {
+                    consecutiveNoChanges++
+                    // Confirm no changes after 2 attempts to be sure
+                    if (consecutiveNoChanges >= 2) {
+                        println("✓ All items loaded (${_state.value.products.size} items total)")
+                        dispatchMutation(ProductsMutation.AllItemsLoaded)
+                        break
+                    }
+                } else {
+                    consecutiveNoChanges = 0 // Reset counter if we got new items
+                }
+                
+                // Safety check: if loading takes too long, break after reasonable limit
+                if (_state.value.products.size > 500) {
+                    println("⚠️ Loaded 500+ items, stopping to prevent memory issues")
+                    dispatchMutation(ProductsMutation.AllItemsLoaded)
+                    break
+                }
+            }
+            
+            dispatchMutation(ProductsMutation.SetLoadingAllItems(isLoading = false))
+            
+            // Show info message if we're in offline mode
+            if (hasError && _state.value.products.isNotEmpty()) {
+                emitEffect(
+                    effect = ProductsEffect.ShowError(
+                        message = "Working in offline mode with ${_state.value.products.size} cached items"
+                    )
+                )
+            }
         }
     }
 
@@ -329,10 +439,29 @@ class ProductsStore(
         }
     }
 
+    private fun handleSearchProducts(query: String) {
+        dispatchMutation(ProductsMutation.SearchQueryChanged(query))
+    }
+
+    private fun handleSetSortOption(sortOption: lt.vitalijus.cmp_custom_pagination.domain.model.SortOption) {
+        dispatchMutation(ProductsMutation.SortOptionChanged(sortOption))
+    }
+
+    private fun handleSetViewLayoutMode(layoutMode: lt.vitalijus.cmp_custom_pagination.domain.model.ViewLayoutPreference) {
+        dispatchMutation(ProductsMutation.ViewLayoutModeChanged(layoutMode))
+        // Also persist to settings
+        scope.launch {
+            settingsRepository.saveViewLayoutPreference(layoutMode)
+        }
+    }
+
     private fun handleAddToBasket(
         product: Product,
         quantity: Int
     ) {
+        println("🛒 DEBUG: handleAddToBasket called - product=${product.id} (${product.title}), quantity=$quantity")
+        println("🛒 DEBUG: Current basket size: ${_state.value.basketItems.size}")
+        
         val result = addToBasketUseCase.execute(
             currentItems = _state.value.basketItems,
             product = product,
@@ -341,10 +470,12 @@ class ProductsStore(
 
         result.fold(
             onSuccess = { updatedItems ->
+                println("🛒 DEBUG: AddToBasket SUCCESS - new basket size: ${updatedItems.size}")
                 dispatchMutation(mutation = ProductsMutation.BasketUpdated(items = updatedItems))
                 emitEffect(effect = ProductsEffect.ShowBasketUpdated)
             },
             onFailure = { error ->
+                println("❌ DEBUG: AddToBasket FAILED - error: ${error.message}")
                 emitEffect(
                     effect = ProductsEffect.ShowError(
                         message = error.message ?: "Failed to add to basket"
@@ -385,11 +516,14 @@ class ProductsStore(
     }
 
     private fun handleToggleFavorite(productId: Long) {
+        println("🔍 DEBUG: handleToggleFavorite called with productId=$productId")
         val currentFavorites = _state.value.favoriteProductIds
         val isAdded = !currentFavorites.contains(productId)
+        println("🔍 DEBUG: Current favorites: $currentFavorites, isAdded=$isAdded")
 
         dispatchMutation(mutation = ProductsMutation.FavoriteToggled(productId = productId))
         emitEffect(effect = ProductsEffect.ShowFavoriteToggled(isAdded = isAdded))
+        println("🔍 DEBUG: Mutation dispatched and effect emitted")
 
         scope.launch {
             if (isAdded) {

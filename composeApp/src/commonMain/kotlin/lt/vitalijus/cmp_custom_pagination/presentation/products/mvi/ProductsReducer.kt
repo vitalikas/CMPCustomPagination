@@ -20,6 +20,20 @@ object ProductsReducer {
                 )
             }
 
+            is ProductsMutation.SetLoadingAllItems -> {
+                state.copy(
+                    isLoadingAllItems = mutation.isLoading,
+                    error = if (mutation.isLoading) null else state.error
+                )
+            }
+
+            is ProductsMutation.AllItemsLoaded -> {
+                state.copy(
+                    allItemsLoaded = true,
+                    isLoadingAllItems = false
+                )
+            }
+
             is ProductsMutation.ProductsLoaded -> {
                 // Deduplicate products by ID (prevents duplicates from cache + pagination)
                 val existingIds = state.products.map { it.id }.toSet()
@@ -43,7 +57,24 @@ object ProductsReducer {
                 )
             }
 
+            is ProductsMutation.SearchQueryChanged -> {
+                state.copy(searchQuery = mutation.query)
+            }
+
+            is ProductsMutation.SortOptionChanged -> {
+                state.copy(sortOption = mutation.sortOption)
+            }
+
+            is ProductsMutation.ViewLayoutModeChanged -> {
+                state.copy(viewLayoutMode = mutation.layoutMode)
+            }
+
+            is ProductsMutation.NetworkStatusChanged -> {
+                state.copy(isConnectedToInternet = mutation.isConnected)
+            }
+
             is ProductsMutation.BasketUpdated -> {
+                println("🛒 DEBUG: Reducer - BasketUpdated: before=${state.basketItems.size} items, after=${mutation.items.size} items")
                 state.copy(
                     basketItems = mutation.items,
                     isLoadingMore = false,
@@ -57,6 +88,7 @@ object ProductsReducer {
                 } else {
                     state.favoriteProductIds + mutation.productId
                 }
+                println("🔍 DEBUG: Reducer - FavoriteToggled: productId=${mutation.productId}, before=${state.favoriteProductIds}, after=$updatedFavorites")
                 state.copy(
                     favoriteProductIds = updatedFavorites
                 )

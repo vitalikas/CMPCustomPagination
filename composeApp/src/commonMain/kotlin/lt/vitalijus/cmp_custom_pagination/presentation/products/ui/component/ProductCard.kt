@@ -1,5 +1,6 @@
 package lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +11,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -55,19 +58,63 @@ fun ProductCard(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Image with favorite button overlay
+            // Image carousel with favorite button overlay
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(180.dp)
             ) {
-                product.thumbnail?.let { thumbnailUrl ->
-                    AsyncImage(
-                        model = thumbnailUrl,
-                        contentDescription = product.title,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
+                // Show carousel if multiple images, otherwise single image
+                val imageUrls = product.images?.takeIf { it.isNotEmpty() } ?: listOfNotNull(product.thumbnail)
+                
+                if (imageUrls.size > 1) {
+                    val pagerState = rememberPagerState(pageCount = { imageUrls.size })
+                    
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.fillMaxSize()
+                    ) { page ->
+                        AsyncImage(
+                            model = imageUrls[page],
+                            contentDescription = "${product.title} - Image ${page + 1}",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                    
+                    // Page indicators
+                    if (imageUrls.size > 1) {
+                        Row(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(bottom = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            repeat(imageUrls.size) { index ->
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            if (pagerState.currentPage == index)
+                                                MaterialTheme.colorScheme.primary
+                                            else
+                                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                                        )
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    // Single image
+                    imageUrls.firstOrNull()?.let { imageUrl ->
+                        AsyncImage(
+                            model = imageUrl,
+                            contentDescription = product.title,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
                 }
 
                 // Favorite button in top-right corner
@@ -77,7 +124,7 @@ fun ProductCard(
                         .padding(8.dp),
                     shape = CircleShape,
                     colors = CardDefaults.cardColors(
-                        containerColor = Color.Transparent
+                        containerColor = Color.White.copy(alpha = 0.9f)
                     )
                 ) {
                     IconButton(
@@ -109,12 +156,22 @@ fun ProductCard(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                product.category?.let { category ->
-                    Text(
-                        text = category.uppercase(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                // Star rating (visual only - cleaner UI)
+                product.rating?.let { rating ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        modifier = Modifier.padding(vertical = 2.dp)
+                    ) {
+                        repeat(5) { index ->
+                            Icon(
+                                imageVector = if (index < rating.toInt()) AppIcons.Star else AppIcons.StarBorder,
+                                contentDescription = "Rating: $rating out of 5",
+                                tint = if (index < rating.toInt()) Color(0xFFFFA000) else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
                 }
 
                 Text(
@@ -189,12 +246,22 @@ fun ProductCardHorizontal(
                         overflow = TextOverflow.Ellipsis
                     )
 
-                    product.category?.let { category ->
-                        Text(
-                            text = category.uppercase(),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    // Star rating (visual only - cleaner UI)
+                product.rating?.let { rating ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        modifier = Modifier.padding(vertical = 2.dp)
+                    ) {
+                        repeat(5) { index ->
+                            Icon(
+                                imageVector = if (index < rating.toInt()) AppIcons.Star else AppIcons.StarBorder,
+                                contentDescription = "Rating: $rating out of 5",
+                                    tint = if (index < rating.toInt()) Color(0xFFFFA000) else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
+                    }
                     }
 
                     Text(

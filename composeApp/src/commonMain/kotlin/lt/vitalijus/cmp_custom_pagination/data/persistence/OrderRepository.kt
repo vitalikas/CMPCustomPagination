@@ -1,5 +1,6 @@
 package lt.vitalijus.cmp_custom_pagination.data.persistence
 
+import lt.vitalijus.cmp_custom_pagination.domain.model.BasketItem
 import lt.vitalijus.cmp_custom_pagination.domain.model.DeliveryAddress
 import lt.vitalijus.cmp_custom_pagination.domain.model.Order
 import lt.vitalijus.cmp_custom_pagination.domain.model.PaymentMethod
@@ -11,6 +12,9 @@ interface OrderRepository {
     suspend fun updateOrder(order: Order)
     suspend fun deleteOrder(orderId: String)
     suspend fun clearAllOrders()
+
+    suspend fun saveBasket(basketItems: List<BasketItem>)
+    suspend fun getBasket(): List<BasketItem>
 
     suspend fun saveDeliveryAddress(address: DeliveryAddress)
     suspend fun getLastDeliveryAddress(): DeliveryAddress?

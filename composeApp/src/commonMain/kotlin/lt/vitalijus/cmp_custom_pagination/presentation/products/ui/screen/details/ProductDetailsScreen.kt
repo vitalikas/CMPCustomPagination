@@ -31,6 +31,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,6 +60,13 @@ fun ProductDetailsScreen(
     onNavigateToBasket: () -> Unit = {},
     onFavoriteClick: () -> Unit = {}
 ) {
+    // Debug: Log product images
+    LaunchedEffect(product.id) {
+        println("📸 DEBUG ProductDetails: Product ${product.id} has ${product.images?.size ?: 0} images")
+        println("📸 DEBUG ProductDetails: Images = ${product.images}")
+        println("📸 DEBUG ProductDetails: Thumbnail = ${product.thumbnail}")
+    }
+    
     var quantity by remember { mutableStateOf(1) }
     var quantityText by remember { mutableStateOf("1") }
 
@@ -395,7 +403,7 @@ fun ProductDetailsScreen(
                     .weight(0.2f)
                     .fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = Color(0xFFE8F5E9) // Very light green (lighter than nav bar for distinction)
                 ),
                 shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
             ) {

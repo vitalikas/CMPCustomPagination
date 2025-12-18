@@ -5,6 +5,8 @@ import lt.vitalijus.cmp_custom_pagination.domain.model.DeliveryAddress
 import lt.vitalijus.cmp_custom_pagination.domain.model.Order
 import lt.vitalijus.cmp_custom_pagination.domain.model.PaymentMethod
 import lt.vitalijus.cmp_custom_pagination.domain.model.Product
+import lt.vitalijus.cmp_custom_pagination.domain.model.SortOption
+import lt.vitalijus.cmp_custom_pagination.domain.model.ViewLayoutPreference
 
 /**
  * Single immutable state for the Products feature.
@@ -15,8 +17,14 @@ data class ProductsState(
     val favoriteProductIds: Set<Long> = emptySet(),
     val favoriteProductsData: List<Product> = emptyList(), // Products loaded specifically for favorites screen
     val productCache: Map<Long, Product> = emptyMap(), // Cache of all viewed products for instant access
+    val searchQuery: String = "", // Current search query
+    val sortOption: SortOption = SortOption.NONE, // Current sort option
+    val viewLayoutMode: ViewLayoutPreference = ViewLayoutPreference.GRID, // Current view layout (Grid/List)
     val isLoadingMore: Boolean = false,
     val isLoadingFavorites: Boolean = false,
+    val isLoadingAllItems: Boolean = false, // Loading all items for sorting
+    val isConnectedToInternet: Boolean = true, // Network connectivity status
+    val allItemsLoaded: Boolean = false, // All items have been loaded
     val error: String? = null,
     val currentDeliveryAddress: DeliveryAddress? = null,
     val currentPaymentMethod: PaymentMethod? = null,
@@ -38,6 +46,59 @@ data class ProductsState(
 
     val favoriteProducts: List<Product>
         get() = products.filter { it.id in favoriteProductIds }
+    
+    /**
+     * Filtered products based on search query and sort option.
+     * Searches in title, brand, category, and description.
+     * Applies sorting dynamically based on the current sortOption.
+     */
+    val filteredProducts: List<Product>
+        get() {
+            val filtered = if (searchQuery.isBlank()) {
+                products
+            } else {
+                products.filter { product ->
+                    product.title.contains(searchQuery, ignoreCase = true) ||
+                    product.brand?.contains(searchQuery, ignoreCase = true) == true ||
+                    product.category?.contains(searchQuery, ignoreCase = true) == true ||
+                    product.description?.contains(searchQuery, ignoreCase = true) == true
+                }
+            }
+            
+            // Apply sorting to filtered results
+            return when (sortOption) {
+                SortOption.NONE -> filtered
+                SortOption.PRICE_LOW_TO_HIGH -> filtered.sortedBy { it.price }
+                SortOption.PRICE_HIGH_TO_LOW -> filtered.sortedByDescending { it.price }
+                SortOption.RATING -> filtered.sortedByDescending { it.rating ?: 0.0 }
+                SortOption.NAME -> filtered.sortedBy { it.title }
+            }
+        }
+    
+    /**
+     * Filtered favorite products based on search query and sort option.
+     */
+    val filteredFavoriteProducts: List<Product>
+        get() {
+            val filtered = if (searchQuery.isBlank()) {
+                favoriteProductsData
+            } else {
+                favoriteProductsData.filter { product ->
+                    product.title.contains(searchQuery, ignoreCase = true) ||
+                    product.brand?.contains(searchQuery, ignoreCase = true) == true ||
+                    product.category?.contains(searchQuery, ignoreCase = true) == true ||
+                    product.description?.contains(searchQuery, ignoreCase = true) == true
+                }
+            }
+            
+            return when (sortOption) {
+                SortOption.NONE -> filtered
+                SortOption.PRICE_LOW_TO_HIGH -> filtered.sortedBy { it.price }
+                SortOption.PRICE_HIGH_TO_LOW -> filtered.sortedByDescending { it.price }
+                SortOption.RATING -> filtered.sortedByDescending { it.rating ?: 0.0 }
+                SortOption.NAME -> filtered.sortedBy { it.title }
+            }
+        }
     
     /**
      * Find a product by ID from any available source (cache, products list, or favorites data).

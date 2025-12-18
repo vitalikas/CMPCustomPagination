@@ -19,6 +19,7 @@ class ProductsStateMachine(
         return when (currentState) {
             is ProductsTransitionState.Idle -> when (intent) {
                 ProductsIntent.LoadMore -> ProductsTransitionState.LoadingProducts
+                ProductsIntent.LoadAllItems -> ProductsTransitionState.LoadingProducts
                 is ProductsIntent.LoadFavorites -> ProductsTransitionState.LoadingProducts
                 is ProductsIntent.NavigateTo -> ProductsTransitionState.Idle
                 is ProductsIntent.ToggleFavorite -> ProductsTransitionState.Idle
@@ -35,7 +36,11 @@ class ProductsStateMachine(
 
             is ProductsTransitionState.Ready -> when (intent) {
                 ProductsIntent.LoadMore -> ProductsTransitionState.LoadingProducts
+                ProductsIntent.LoadAllItems -> ProductsTransitionState.LoadingProducts
                 is ProductsIntent.LoadFavorites -> ProductsTransitionState.LoadingProducts
+                is ProductsIntent.SearchProducts -> ProductsTransitionState.Ready
+                is ProductsIntent.SetSortOption -> ProductsTransitionState.Ready
+                is ProductsIntent.SetViewLayoutMode -> ProductsTransitionState.Ready
                 is ProductsIntent.AddToBasket -> ProductsTransitionState.ProcessingBasket
                 is ProductsIntent.UpdateQuantity -> ProductsTransitionState.ProcessingBasket
                 is ProductsIntent.RemoveProduct -> ProductsTransitionState.ProcessingBasket
@@ -51,6 +56,7 @@ class ProductsStateMachine(
 
             is ProductsTransitionState.Error -> when (intent) {
                 ProductsIntent.LoadMore -> ProductsTransitionState.LoadingProducts
+                ProductsIntent.LoadAllItems -> ProductsTransitionState.LoadingProducts
                 is ProductsIntent.LoadFavorites -> ProductsTransitionState.LoadingProducts
                 is ProductsIntent.NavigateTo -> currentState
                 is ProductsIntent.ToggleFavorite -> currentState
@@ -76,9 +82,26 @@ class ProductsStateMachine(
                     ProductsTransitionState.Ready
                 }
 
+            is ProductsMutation.SetLoadingAllItems ->
+                if (mutation.isLoading) {
+                    ProductsTransitionState.LoadingProducts
+                } else {
+                    ProductsTransitionState.Ready
+                }
+
+            is ProductsMutation.AllItemsLoaded -> ProductsTransitionState.Ready
+
             is ProductsMutation.ProductsLoaded -> ProductsTransitionState.Ready
 
             is ProductsMutation.LoadingError -> ProductsTransitionState.Error(mutation.message)
+
+            is ProductsMutation.SearchQueryChanged -> currentState
+
+            is ProductsMutation.SortOptionChanged -> currentState
+
+            is ProductsMutation.ViewLayoutModeChanged -> currentState
+
+            is ProductsMutation.NetworkStatusChanged -> currentState
 
             is ProductsMutation.BasketUpdated -> ProductsTransitionState.Ready
 

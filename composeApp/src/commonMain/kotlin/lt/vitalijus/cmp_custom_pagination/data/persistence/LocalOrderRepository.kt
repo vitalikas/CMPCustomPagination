@@ -4,6 +4,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import lt.vitalijus.cmp_custom_pagination.domain.model.BasketItem
 import lt.vitalijus.cmp_custom_pagination.domain.model.DeliveryAddress
 import lt.vitalijus.cmp_custom_pagination.domain.model.Order
 import lt.vitalijus.cmp_custom_pagination.domain.model.PaymentMethod
@@ -82,6 +83,19 @@ class LocalOrderRepository(
         }
     }
 
+    override suspend fun saveBasket(basketItems: List<BasketItem>) = mutex.withLock {
+        storage.putString(KEY_BASKET, json.encodeToString(basketItems))
+    }
+
+    override suspend fun getBasket(): List<BasketItem> = mutex.withLock {
+        val basketJson = storage.getString(KEY_BASKET) ?: return emptyList()
+        return try {
+            json.decodeFromString<List<BasketItem>>(basketJson)
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
     override suspend fun saveFavorites(favoriteIds: Set<Long>) = mutex.withLock {
         storage.putString(KEY_FAVORITES, json.encodeToString(favoriteIds.toList()))
     }
@@ -97,6 +111,7 @@ class LocalOrderRepository(
 
     companion object {
         private const val KEY_ORDERS = "orders"
+        private const val KEY_BASKET = "basket"
         private const val KEY_DELIVERY_ADDRESS = "delivery_address"
         private const val KEY_PAYMENT_METHOD = "payment_method"
         private const val KEY_FAVORITES = "favorites"

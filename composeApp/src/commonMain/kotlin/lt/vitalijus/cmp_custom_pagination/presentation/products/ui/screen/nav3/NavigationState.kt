@@ -46,6 +46,7 @@ val serializersConfig = SavedStateConfiguration {
             subclass(Route.Basket::class, Route.Basket.serializer())
             subclass(Route.Favorites::class, Route.Favorites.serializer())
             subclass(Route.Orders::class, Route.Orders.serializer())
+            subclass(Route.Settings::class, Route.Settings.serializer())
         }
     }
 }

@@ -22,6 +22,9 @@ sealed interface Route : NavKey {
     data object Orders : Route
 
     @Serializable
+    data object Settings : Route
+
+    @Serializable
     data object Delivery : Route
 
     @Serializable
