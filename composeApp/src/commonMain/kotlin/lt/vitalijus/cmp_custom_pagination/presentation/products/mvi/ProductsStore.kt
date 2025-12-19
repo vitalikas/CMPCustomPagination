@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.seconds
 import lt.vitalijus.cmp_custom_pagination.core.utils.currentTimeMillis
 import lt.vitalijus.cmp_custom_pagination.core.utils.pager.ProductPager
 import lt.vitalijus.cmp_custom_pagination.data.network.NetworkMonitor
@@ -32,6 +31,7 @@ import lt.vitalijus.cmp_custom_pagination.domain.paging.PagingEvent
 import lt.vitalijus.cmp_custom_pagination.domain.paging.ProductPagingFactory
 import lt.vitalijus.cmp_custom_pagination.domain.usecase.basket.AddToBasketUseCase
 import lt.vitalijus.cmp_custom_pagination.presentation.products.Screen
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Redux-style Store for managing Products state:
@@ -68,19 +68,19 @@ class ProductsStore(
 
             // Load settings
             val settings = settingsRepository.getSettings()
-            
+
             // Load last sync timestamp
             val lastSyncTimestamp = settingsRepository.getLastSyncTimestamp()
             if (lastSyncTimestamp != null) {
                 dispatchMutation(ProductsMutation.SyncTimestampUpdated(lastSyncTimestamp))
             }
-            
+
             // Load saved layout preference
             dispatchMutation(ProductsMutation.ViewLayoutModeChanged(settings.viewLayoutPreference))
-            
+
             // Load show sync timestamp preference
             dispatchMutation(ProductsMutation.ShowSyncTimestampChanged(settings.showSyncTimestamp))
-            
+
             // Load allItemsLoaded flag (remembers if all products were fetched)
             val allItemsLoaded = settingsRepository.getAllItemsLoaded()
             if (allItemsLoaded) {
@@ -88,12 +88,12 @@ class ProductsStore(
                 println("📋 Restored allItemsLoaded = true from settings")
             }
         }
-        
+
         // Start automatic refresh based on sync frequency setting
         scope.launch {
             startAutoRefreshMonitor()
         }
-        
+
         // Monitor network connectivity in separate coroutine
         scope.launch {
             networkMonitor.isConnected.collect { isConnected ->
@@ -151,7 +151,7 @@ class ProductsStore(
 
     // Track current page number for cache management
     private var currentPageNumber = 0
-    
+
     private val pager: ProductPager = pagerFactory.create { event ->
         when (event) {
             is PagingEvent.LoadingChanged -> {
@@ -162,7 +162,7 @@ class ProductsStore(
 
             is PagingEvent.ProductsLoaded -> {
                 val isRefreshingFirstPage = _state.value.isRefreshing && currentPageNumber == 0
-                
+
                 // If we're refreshing AND this is the first page (page 0), clear old data first
                 if (isRefreshingFirstPage) {
                     println("🧹 Clearing old products (refresh successful, showing new data)")
@@ -183,10 +183,11 @@ class ProductsStore(
                     currentPageNumber++ // Increment for next page
                     println("📦 Cached ${event.products.size} products for page ${currentPageNumber - 1}")
                 }
-                
+
                 // ✅ Update sync timestamp ONLY when refresh completes successfully with first page
                 if (isRefreshingFirstPage && event.products.isNotEmpty()) {
-                    val timestamp = lt.vitalijus.cmp_custom_pagination.core.utils.currentTimeMillis()
+                    val timestamp =
+                        lt.vitalijus.cmp_custom_pagination.core.utils.currentTimeMillis()
                     scope.launch {
                         settingsRepository.saveLastSyncTimestamp(timestamp)
                         dispatchMutation(ProductsMutation.SyncTimestampUpdated(timestamp))
@@ -198,7 +199,7 @@ class ProductsStore(
             is PagingEvent.Error -> {
                 // Only show error if we have no data (not in offline mode with cached data)
                 val hasData = _state.value.products.isNotEmpty()
-                
+
                 if (hasData) {
                     // We have cached data - this is offline mode, not a real error
                     println("ℹ️ Network unavailable, working in offline mode with ${_state.value.products.size} cached items")
@@ -342,7 +343,7 @@ class ProductsStore(
                     orderRepository.savePaymentMethod(it)
                 }
             }
-            
+
             is ProductsMutation.AllItemsLoaded -> {
                 // Persist that all items were loaded so we don't ask to load again on app restart
                 settingsRepository.saveAllItemsLoaded(true)
@@ -365,7 +366,7 @@ class ProductsStore(
             pager.loadNextProducts()
         }
     }
-    
+
     /**
      * Monitor sync frequency setting and trigger automatic refreshes.
      * Checks every minute if refresh is needed based on user's sync frequency preference.
@@ -374,16 +375,16 @@ class ProductsStore(
         println("🔄 ========================================")
         println("🔄 Auto-refresh monitor STARTED")
         println("🔄 ========================================")
-        
+
         while (true) {
             try {
                 println("\n🔍 ========== AUTO-REFRESH CHECK ==========")
-                
+
                 // Get current settings
                 val settings = settingsRepository.getSettings()
                 val syncFrequency = settings.syncFrequency
                 println("🔍 Sync frequency: ${syncFrequency.displayName} (${syncFrequency.durationMs}ms)")
-                
+
                 // Check if manual only
                 if (syncFrequency == lt.vitalijus.cmp_custom_pagination.domain.model.SyncFrequency.MANUAL_ONLY) {
                     println("⏭️ AUTO-REFRESH SKIPPED: MANUAL_ONLY mode")
@@ -391,7 +392,7 @@ class ProductsStore(
                     delay(60.seconds)
                     continue
                 }
-                
+
                 // Check if already refreshing
                 val isCurrentlyRefreshing = _state.value.isRefreshing
                 println("🔍 Currently refreshing: $isCurrentlyRefreshing")
@@ -401,28 +402,28 @@ class ProductsStore(
                     delay(60.seconds)
                     continue
                 }
-                
+
                 // Get last sync timestamp
                 val lastSyncTimestamp = settingsRepository.getLastSyncTimestamp()
                 println("🔍 Last sync timestamp: $lastSyncTimestamp")
-                
+
                 if (lastSyncTimestamp != null) {
                     val now = lt.vitalijus.cmp_custom_pagination.core.utils.currentTimeMillis()
                     val timeSinceLastSync = now - lastSyncTimestamp
                     val minutesSinceSync = timeSinceLastSync / 60000
-                    
+
                     println("🔍 Current time: $now")
                     println("🔍 Time since last sync: ${timeSinceLastSync}ms ($minutesSinceSync minutes)")
                     println("🔍 Required interval: ${syncFrequency.durationMs}ms")
-                    
+
                     // Trigger refresh if interval has passed
                     if (timeSinceLastSync >= syncFrequency.durationMs) {
                         println("⏰ ✅ AUTO-REFRESH TRIGGERED!")
                         println("⏰ Reason: ${timeSinceLastSync}ms >= ${syncFrequency.durationMs}ms")
                         println("🔍 ==========================================\n")
                         handleManualRefresh()
-                        // After refresh, wait full interval before next check
-                        delay(syncFrequency.durationMs.coerceAtLeast(10_000)) // Min 10 seconds
+                        // After refresh, wait 10 seconds before next check (to pick up setting changes quickly)
+                        delay(10.seconds)
                         continue
                     } else {
                         val remainingMs = syncFrequency.durationMs - timeSinceLastSync
@@ -430,9 +431,10 @@ class ProductsStore(
                         val remainingSeconds = (remainingMs % 60000) / 1000
                         println("⏱️ Next auto-refresh in ~$remainingMinutes min ${remainingSeconds}s")
                         println("🔍 ==========================================\n")
-                        // ✅ Wait for the remaining time (smart wait)
-                        println("💤 Waiting ${remainingMs}ms (${remainingMinutes}m ${remainingSeconds}s) until next refresh...")
-                        delay(remainingMs.coerceAtLeast(10_000)) // Min 10 seconds, max remaining time
+                        // ✅ Check every 10 seconds instead of waiting full remaining time
+                        // This allows quick response to settings changes
+                        println("💤 Waiting 10 seconds before next check (responsive to setting changes)...")
+                        delay(10.seconds)
                         continue
                     }
                 } else {
@@ -440,11 +442,11 @@ class ProductsStore(
                     println("⏰ Reason: Initial sync (no lastSyncTimestamp)")
                     println("🔍 ==========================================\n")
                     handleManualRefresh()
-                    // After initial sync, wait full interval
-                    delay(syncFrequency.durationMs.coerceAtLeast(10_000))
+                    // After initial sync, wait 10 seconds before next check
+                    delay(10.seconds)
                     continue
                 }
-                
+
             } catch (e: Exception) {
                 println("❌ Auto-refresh monitor error: ${e.message}")
                 e.printStackTrace()
@@ -457,23 +459,23 @@ class ProductsStore(
     private fun handleManualRefresh() {
         scope.launch {
             dispatchMutation(ProductsMutation.SetRefreshing(isRefreshing = true))
-            
+
             try {
                 println("🔄 Starting manual refresh...")
-                
+
                 // 1. Clear database cache (removes ALL stale data)
                 // BUT keep UI data visible until new data arrives!
                 productsRepository.clearCache()
                 println("🗑️ Database cache cleared")
-                
+
                 // 2. Reset page counter (critical for proper caching)
                 currentPageNumber = 0
                 println("📄 Page counter reset to 0")
-                
+
                 // 3. Reset pager to initial state (offset/cursor = 0, isEndReached = false)
                 pager.reset()
                 println("↩️ Pager reset to initial state")
-                
+
                 // 4. Prepare state for refresh (but DON'T clear products yet - keep them visible!)
                 _state.update { currentState ->
                     currentState.copy(
@@ -485,18 +487,18 @@ class ProductsStore(
                 // Reset persisted allItemsLoaded flag
                 settingsRepository.saveAllItemsLoaded(false)
                 println("🔄 State prepared for refresh (old data still visible, allItemsLoaded reset)")
-                
+
                 // 5. Load first page from API (will be cached automatically by pager event handler)
                 // When products arrive, they'll replace old data via ProductsLoaded mutation
                 pager.loadNextProducts()
-                
+
                 // 6. On SUCCESS: Clear old data and show new data
                 // This happens automatically in PagingEvent.ProductsLoaded handler
                 // We need to clear products there BEFORE appending new ones
-                
+
                 // 7. Sync timestamp is now updated in PagingEvent.ProductsLoaded handler
                 // (after products actually arrive successfully)
-                
+
                 println("✅ Manual refresh initiated (waiting for products to load...)")
             } catch (e: Exception) {
                 println("❌ Manual refresh failed: ${e.message}")
@@ -510,70 +512,72 @@ class ProductsStore(
     private fun handleLoadAllItems() {
         scope.launch {
             dispatchMutation(ProductsMutation.SetLoadingAllItems(isLoading = true))
-            
+
             // If already loaded, just mark as complete and return
             if (_state.value.allItemsLoaded) {
                 println("✓ All items already loaded (${_state.value.products.size} items)")
                 dispatchMutation(ProductsMutation.SetLoadingAllItems(isLoading = false))
                 return@launch
             }
-            
-            // Keep loading until all items are fetched
-            // Note: Images are loaded but can be lazy-loaded in UI for better performance
-            var consecutiveNoChanges = 0
-            var hasError = false
-            
-            while (!_state.value.allItemsLoaded) {
-                // Check if there are more items to load by attempting to load
-                val currentSize = _state.value.products.size
-                val errorBefore = _state.value.error
-                
-                pager.loadNextProducts()
-                
-                // Wait a bit for the load to complete
-                kotlinx.coroutines.delay(300) // Reduced delay for faster loading
-                
-                // Check if we got an error (network unavailable in offline mode)
-                val errorAfter = _state.value.error
-                if (errorAfter != null && errorAfter != errorBefore && currentSize > 0) {
-                    // We have an error but have cached data - offline mode
-                    println("ℹ️ Working in offline mode with ${currentSize} cached items")
-                    dispatchMutation(ProductsMutation.AllItemsLoaded)
-                    hasError = true
-                    break
-                }
-                
-                // If size hasn't changed after loading, we've reached the end
-                if (_state.value.products.size == currentSize) {
-                    consecutiveNoChanges++
-                    // Confirm no changes after 2 attempts to be sure
-                    if (consecutiveNoChanges >= 2) {
-                        println("✓ All items loaded (${_state.value.products.size} items total)")
-                        dispatchMutation(ProductsMutation.AllItemsLoaded)
-                        break
+
+            println("🚀 Starting optimized parallel loading...")
+            val startTime = currentTimeMillis()
+
+            try {
+                val initialSize = _state.value.products.size
+
+                // Strategy: Load pages sequentially but quickly (no batching delay)
+                // This avoids pager state conflicts while still being fast
+                var consecutiveEmptyPages = 0
+                var totalLoaded = 0
+
+                println("📦 Loading all available pages quickly...")
+
+                // Keep loading until we hit empty pages (no more data)
+                while (consecutiveEmptyPages < 2 && _state.value.products.size < 500) {
+                    val sizeBefore = _state.value.products.size
+
+                    // Load next page
+                    pager.loadNextProducts()
+
+                    // Very short delay - just enough for the page to process
+                    delay(150) // Reduced from 300ms for faster loading
+
+                    val sizeAfter = _state.value.products.size
+                    val itemsAdded = sizeAfter - sizeBefore
+
+                    if (itemsAdded == 0) {
+                        consecutiveEmptyPages++
+                    } else {
+                        consecutiveEmptyPages = 0
+                        totalLoaded += itemsAdded
+                        println("📄 Loaded page: +$itemsAdded items (total: $sizeAfter)")
                     }
-                } else {
-                    consecutiveNoChanges = 0 // Reset counter if we got new items
                 }
-                
-                // Safety check: if loading takes too long, break after reasonable limit
-                if (_state.value.products.size > 500) {
-                    println("⚠️ Loaded 500+ items, stopping to prevent memory issues")
+
+                val finalSize = _state.value.products.size
+                val duration = currentTimeMillis() - startTime
+
+                println("✅ Loading complete!")
+                println("⏱️ Loaded $totalLoaded new items in ${duration}ms (${finalSize} items total)")
+                if (duration > 0 && totalLoaded > 0) {
+                    println("📊 Average speed: ${(totalLoaded * 1000 / duration)} items/second")
+                }
+
+                dispatchMutation(ProductsMutation.AllItemsLoaded)
+
+            } catch (e: Exception) {
+                println("❌ Error during parallel loading: ${e.message}")
+                // Fall back to what we have
+                if (_state.value.products.isNotEmpty()) {
+                    println("ℹ️ Using ${_state.value.products.size} items loaded before error")
                     dispatchMutation(ProductsMutation.AllItemsLoaded)
-                    break
+                } else {
+                    dispatchMutation(ProductsMutation.LoadingError("Failed to load all items: ${e.message}"))
                 }
             }
-            
+
             dispatchMutation(ProductsMutation.SetLoadingAllItems(isLoading = false))
-            
-            // Show info message if we're in offline mode
-            if (hasError && _state.value.products.isNotEmpty()) {
-                emitEffect(
-                    effect = ProductsEffect.ShowError(
-                        message = "Working in offline mode with ${_state.value.products.size} cached items"
-                    )
-                )
-            }
         }
     }
 
@@ -658,7 +662,7 @@ class ProductsStore(
             settingsRepository.saveViewLayoutPreference(layoutMode)
         }
     }
-    
+
     private fun handleSetShowSyncTimestamp(show: Boolean) {
         dispatchMutation(ProductsMutation.ShowSyncTimestampChanged(show))
         // Also persist to settings
@@ -673,7 +677,7 @@ class ProductsStore(
     ) {
         println("🛒 DEBUG: handleAddToBasket called - product=${product.id} (${product.title}), quantity=$quantity")
         println("🛒 DEBUG: Current basket size: ${_state.value.basketItems.size}")
-        
+
         val result = addToBasketUseCase.execute(
             currentItems = _state.value.basketItems,
             product = product,
