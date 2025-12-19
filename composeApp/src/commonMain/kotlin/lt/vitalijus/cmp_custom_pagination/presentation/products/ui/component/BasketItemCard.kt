@@ -198,7 +198,7 @@ fun BasketItemCard(
                                 quantity = basketItem.quantity,
                                 onQuantityChange = onUpdateQuantity,
                                 buttonSize = 32.dp,
-                                textFieldWidth = 45.dp,
+                                textFieldWidth = 60.dp, // Increased from 45dp to fit 3 digits (999)
                                 buttonBackgroundColor = Color(
                                     0xFF1B5E20
                                 )
