@@ -12,11 +12,13 @@ sealed interface ProductsIntent {
 
     data object LoadMore : ProductsIntent
     data object LoadAllItems : ProductsIntent  // Load all remaining items (for sorting)
+    data object ManualRefresh : ProductsIntent  // User-initiated refresh (pull-to-refresh)
     data class LoadFavorites(val favoriteIds: Set<Long>) :
         ProductsIntent  // Load specific products by IDs
     data class SearchProducts(val query: String) : ProductsIntent
     data class SetSortOption(val sortOption: SortOption) : ProductsIntent
     data class SetViewLayoutMode(val layoutMode: ViewLayoutPreference) : ProductsIntent
+    data class SetShowSyncTimestamp(val show: Boolean) : ProductsIntent
     data class AddToBasket(
         val product: Product,
         val quantity: Int

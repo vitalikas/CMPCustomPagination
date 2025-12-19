@@ -58,6 +58,7 @@ fun ProductsScreen(
     onProductClick: (Long) -> Unit = {},
     onFavoriteClick: (Long) -> Unit = {},
     selectedProductId: Long? = null,
+    syncIntervalMs: Long? = null,
     modifier: Modifier = Modifier
 ) {
     val lazyGridState = rememberLazyGridState()
@@ -116,7 +117,14 @@ fun ProductsScreen(
             },
             onLoadAllItems = {
                 onIntent(ProductsIntent.LoadAllItems)
-            }
+            },
+            onManualRefresh = {
+                onIntent(ProductsIntent.ManualRefresh)
+            },
+            lastSyncTimestamp = state.lastSyncTimestamp,
+            showSyncInfo = state.showSyncTimestamp, // Reactive to settings
+            isRefreshing = state.isRefreshing,
+            syncIntervalMs = syncIntervalMs // Show rotating icon during refresh
         )
 
         // Search bar

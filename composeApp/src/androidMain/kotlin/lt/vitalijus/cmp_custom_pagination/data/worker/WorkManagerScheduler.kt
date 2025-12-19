@@ -12,14 +12,14 @@ import java.util.concurrent.TimeUnit
  * Scheduler for automatic background cache refresh using WorkManager.
  * 
  * Configuration:
- * - Runs every 2 minutes (minimum allowed by WorkManager: 15 minutes, but we use 2 min for testing)
+ * - Runs every 15 minutes (minimum allowed by WorkManager for periodic work)
  * - Requires internet connection (CONNECTED constraint)
  * - Survives app restart
  * - Battery-efficient
  */
 object WorkManagerScheduler {
 
-    private const val REFRESH_INTERVAL_MINUTES = 2L
+    private const val REFRESH_INTERVAL_MINUTES = 15L
 
     /**
      * Schedule periodic cache refresh.

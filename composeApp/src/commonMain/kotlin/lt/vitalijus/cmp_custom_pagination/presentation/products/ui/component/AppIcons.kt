@@ -1,5 +1,8 @@
 package lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.SolidColor
@@ -870,4 +873,8 @@ object AppIcons {
             }
         }.build()
     }
+    
+    // Material Icons for sync-related features
+    val Sync: ImageVector get() = Icons.Default.Sync
+    val Schedule: ImageVector get() = Icons.Default.Schedule
 }

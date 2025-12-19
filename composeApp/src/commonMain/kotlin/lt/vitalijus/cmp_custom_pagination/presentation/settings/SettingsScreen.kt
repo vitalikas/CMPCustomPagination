@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import lt.vitalijus.cmp_custom_pagination.domain.model.SyncFrequency
 import lt.vitalijus.cmp_custom_pagination.domain.model.UserSettings
 import lt.vitalijus.cmp_custom_pagination.domain.model.ViewLayoutPreference
 import lt.vitalijus.cmp_custom_pagination.presentation.products.ui.component.AppIcons
@@ -20,6 +21,8 @@ fun SettingsScreen(
     onViewLayoutChange: (ViewLayoutPreference) -> Unit,
     onNotificationsChange: (Boolean) -> Unit,
     onAnalyticsChange: (Boolean) -> Unit,
+    onSyncFrequencyChange: (SyncFrequency) -> Unit,
+    onShowSyncTimestampChange: (Boolean) -> Unit,
     onResetToDefaults: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -96,6 +99,71 @@ fun SettingsScreen(
                 Switch(
                     checked = settings.enableAnalytics,
                     onCheckedChange = onAnalyticsChange
+                )
+            }
+            
+            // Data Sync Section Header
+            Text(
+                text = "Data Synchronization",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+            )
+            
+            // Sync Frequency
+            SettingsItem(
+                title = "Sync Frequency",
+                subtitle = "How often to refresh data automatically",
+                icon = AppIcons.Sync
+            ) {
+                var showMenu by remember { mutableStateOf(false) }
+                
+                Box {
+                    OutlinedButton(onClick = { showMenu = true }) {
+                        Text(settings.syncFrequency.displayName)
+                    }
+                    
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        SyncFrequency.entries.forEach { freq ->
+                            DropdownMenuItem(
+                                text = {
+                                    Column {
+                                        Text(
+                                            text = freq.displayName,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                        if (freq == SyncFrequency.MANUAL_ONLY) {
+                                            Text(
+                                                text = "Saves mobile data",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                },
+                                onClick = {
+                                    onSyncFrequencyChange(freq)
+                                    showMenu = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+            
+            // Show Sync Timestamp
+            SettingsItem(
+                title = "Show Last Sync Time",
+                subtitle = "Display when data was last refreshed",
+                icon = AppIcons.Schedule
+            ) {
+                Switch(
+                    checked = settings.showSyncTimestamp,
+                    onCheckedChange = onShowSyncTimestampChange
                 )
             }
             

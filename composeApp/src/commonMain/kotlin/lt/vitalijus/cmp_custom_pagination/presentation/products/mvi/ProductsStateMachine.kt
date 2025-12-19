@@ -20,6 +20,7 @@ class ProductsStateMachine(
             is ProductsTransitionState.Idle -> when (intent) {
                 ProductsIntent.LoadMore -> ProductsTransitionState.LoadingProducts
                 ProductsIntent.LoadAllItems -> ProductsTransitionState.LoadingProducts
+                ProductsIntent.ManualRefresh -> ProductsTransitionState.LoadingProducts
                 is ProductsIntent.LoadFavorites -> ProductsTransitionState.LoadingProducts
                 is ProductsIntent.NavigateTo -> ProductsTransitionState.Idle
                 is ProductsIntent.ToggleFavorite -> ProductsTransitionState.Idle
@@ -37,10 +38,12 @@ class ProductsStateMachine(
             is ProductsTransitionState.Ready -> when (intent) {
                 ProductsIntent.LoadMore -> ProductsTransitionState.LoadingProducts
                 ProductsIntent.LoadAllItems -> ProductsTransitionState.LoadingProducts
+                ProductsIntent.ManualRefresh -> ProductsTransitionState.LoadingProducts
                 is ProductsIntent.LoadFavorites -> ProductsTransitionState.LoadingProducts
                 is ProductsIntent.SearchProducts -> ProductsTransitionState.Ready
                 is ProductsIntent.SetSortOption -> ProductsTransitionState.Ready
                 is ProductsIntent.SetViewLayoutMode -> ProductsTransitionState.Ready
+                is ProductsIntent.SetShowSyncTimestamp -> ProductsTransitionState.Ready
                 is ProductsIntent.AddToBasket -> ProductsTransitionState.ProcessingBasket
                 is ProductsIntent.UpdateQuantity -> ProductsTransitionState.ProcessingBasket
                 is ProductsIntent.RemoveProduct -> ProductsTransitionState.ProcessingBasket
@@ -89,7 +92,16 @@ class ProductsStateMachine(
                     ProductsTransitionState.Ready
                 }
 
+            is ProductsMutation.SetRefreshing ->
+                if (mutation.isRefreshing) {
+                    ProductsTransitionState.LoadingProducts
+                } else {
+                    ProductsTransitionState.Ready
+                }
+
             is ProductsMutation.AllItemsLoaded -> ProductsTransitionState.Ready
+            
+            is ProductsMutation.SyncTimestampUpdated -> currentState
 
             is ProductsMutation.ProductsLoaded -> ProductsTransitionState.Ready
 
@@ -100,6 +112,8 @@ class ProductsStateMachine(
             is ProductsMutation.SortOptionChanged -> currentState
 
             is ProductsMutation.ViewLayoutModeChanged -> currentState
+            
+            is ProductsMutation.ShowSyncTimestampChanged -> currentState
 
             is ProductsMutation.NetworkStatusChanged -> currentState
 

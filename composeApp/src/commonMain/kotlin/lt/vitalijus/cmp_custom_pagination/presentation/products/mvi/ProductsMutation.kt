@@ -26,7 +26,17 @@ sealed interface ProductsMutation {
         val isLoading: Boolean
     ) : ProductsMutation
 
+    @JvmInline
+    value class SetRefreshing(
+        val isRefreshing: Boolean
+    ) : ProductsMutation
+
     data object AllItemsLoaded : ProductsMutation
+    
+    @JvmInline
+    value class SyncTimestampUpdated(
+        val timestamp: Long
+    ) : ProductsMutation
 
     // Product mutations
     @JvmInline
@@ -55,6 +65,11 @@ sealed interface ProductsMutation {
     @JvmInline
     value class ViewLayoutModeChanged(
         val layoutMode: ViewLayoutPreference
+    ) : ProductsMutation
+    
+    @JvmInline
+    value class ShowSyncTimestampChanged(
+        val show: Boolean
     ) : ProductsMutation
 
     // Network mutations

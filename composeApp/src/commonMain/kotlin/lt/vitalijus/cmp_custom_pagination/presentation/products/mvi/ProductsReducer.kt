@@ -27,10 +27,23 @@ object ProductsReducer {
                 )
             }
 
+            is ProductsMutation.SetRefreshing -> {
+                state.copy(
+                    isRefreshing = mutation.isRefreshing,
+                    error = if (mutation.isRefreshing) null else state.error
+                )
+            }
+
             is ProductsMutation.AllItemsLoaded -> {
                 state.copy(
                     allItemsLoaded = true,
                     isLoadingAllItems = false
+                )
+            }
+            
+            is ProductsMutation.SyncTimestampUpdated -> {
+                state.copy(
+                    lastSyncTimestamp = mutation.timestamp
                 )
             }
 
@@ -67,6 +80,10 @@ object ProductsReducer {
 
             is ProductsMutation.ViewLayoutModeChanged -> {
                 state.copy(viewLayoutMode = mutation.layoutMode)
+            }
+            
+            is ProductsMutation.ShowSyncTimestampChanged -> {
+                state.copy(showSyncTimestamp = mutation.show)
             }
 
             is ProductsMutation.NetworkStatusChanged -> {

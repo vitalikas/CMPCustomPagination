@@ -23,8 +23,11 @@ data class ProductsState(
     val isLoadingMore: Boolean = false,
     val isLoadingFavorites: Boolean = false,
     val isLoadingAllItems: Boolean = false, // Loading all items for sorting
+    val isRefreshing: Boolean = false, // Manual refresh in progress
     val isConnectedToInternet: Boolean = true, // Network connectivity status
     val allItemsLoaded: Boolean = false, // All items have been loaded
+    val lastSyncTimestamp: Long? = null, // Last successful sync timestamp (milliseconds)
+    val showSyncTimestamp: Boolean = true, // Whether to show sync timestamp in UI
     val error: String? = null,
     val currentDeliveryAddress: DeliveryAddress? = null,
     val currentPaymentMethod: PaymentMethod? = null,

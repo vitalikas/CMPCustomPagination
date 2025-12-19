@@ -78,8 +78,19 @@ fun NavigationRoot(
     val viewModel: ProductsViewModel by AppKoinComponent.inject()
 
     val screenTitleProvider: ScreenTitleProvider by AppKoinComponent.inject()
+    val settingsRepository: lt.vitalijus.cmp_custom_pagination.data.persistence.SettingsRepository by AppKoinComponent.inject()
 
     val state by viewModel.state.collectAsStateWithLifecycle()
+    
+    // Load sync frequency for auto-refresh countdown display (reactive to setting changes)
+    var syncFrequency by remember { mutableStateOf<lt.vitalijus.cmp_custom_pagination.domain.model.SyncFrequency?>(null) }
+    
+    // Reload sync frequency whenever we navigate (to pick up settings changes)
+    LaunchedEffect(currentRoute) {
+        val settings = settingsRepository.getSettings()
+        syncFrequency = settings.syncFrequency
+        println("🔍 NavigationRoot: Loaded syncFrequency = ${syncFrequency?.displayName} (${syncFrequency?.durationMs}ms)")
+    }
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -294,7 +305,8 @@ fun NavigationRoot(
                             onFavoriteClick = { productId ->
                                 viewModel.processIntent(ProductsIntent.ToggleFavorite(productId))
                             },
-                            selectedProductId = selectedProductId
+                            selectedProductId = selectedProductId,
+                            syncIntervalMs = syncFrequency?.durationMs
                         )
                     }
                     entry<Route.ProductDetail>(
@@ -383,10 +395,10 @@ fun NavigationRoot(
                         lt.vitalijus.cmp_custom_pagination.presentation.settings.SettingsScreen(
                             settings = currentSettings,
                             onViewLayoutChange = { preference ->
-                                viewModel.viewModelScope.launch {
-                                    settingsRepository.saveViewLayoutPreference(preference)
-                                    currentSettings = currentSettings.copy(viewLayoutPreference = preference)
-                                }
+                                // Dispatch intent to ViewModel for reactive UI update
+                                viewModel.processIntent(ProductsIntent.SetViewLayoutMode(preference))
+                                // Also update local state for immediate Settings screen update
+                                currentSettings = currentSettings.copy(viewLayoutPreference = preference)
                             },
                             onNotificationsChange = { enabled ->
                                 viewModel.viewModelScope.launch {
@@ -400,10 +412,26 @@ fun NavigationRoot(
                                     currentSettings = currentSettings.copy(enableAnalytics = enabled)
                                 }
                             },
+                            onSyncFrequencyChange = { frequency ->
+                                viewModel.viewModelScope.launch {
+                                    settingsRepository.saveSyncFrequency(frequency)
+                                    currentSettings = currentSettings.copy(syncFrequency = frequency)
+                                }
+                            },
+                            onShowSyncTimestampChange = { enabled ->
+                                // Dispatch intent to ViewModel for reactive UI update across all screens
+                                viewModel.processIntent(ProductsIntent.SetShowSyncTimestamp(enabled))
+                                // Also update local state for immediate Settings screen update
+                                currentSettings = currentSettings.copy(showSyncTimestamp = enabled)
+                            },
                             onResetToDefaults = {
                                 viewModel.viewModelScope.launch {
                                     settingsRepository.resetToDefaults()
-                                    currentSettings = settingsRepository.getSettings()
+                                    val newSettings = settingsRepository.getSettings()
+                                    currentSettings = newSettings
+                                    // Update ViewModel state with reset values
+                                    viewModel.processIntent(ProductsIntent.SetViewLayoutMode(newSettings.viewLayoutPreference))
+                                    viewModel.processIntent(ProductsIntent.SetShowSyncTimestamp(newSettings.showSyncTimestamp))
                                 }
                             }
                         )
